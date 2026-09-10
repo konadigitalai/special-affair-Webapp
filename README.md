@@ -1,6 +1,8 @@
 # Special Affair Webapp
 
-Next.js frontend for the Special Affair storefront. The root page serves the exact bundled design from `public/special-affair-reference.html`.
+Next.js frontend for the Special Affair storefront. The root page uses the native React
+storefront in `src/components/storefront/Storefront.tsx` and connects to the sibling
+`special-affair-api` project. See `../INTEGRATION.md` for the integrated setup and flow coverage.
 
 ## Requirements
 
@@ -26,11 +28,15 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api/v1
 
 If the backend is running on another computer, replace `127.0.0.1` with that computer's local network IP address. The backend must allow requests from the frontend origin.
 
-## Backend Testing Status
+## Backend integration
 
-The exact design at `/` is the supplied bundled prototype. Its catalog, bag, checkout, and confirmation flows use the bundle's local demo state; `NEXT_PUBLIC_API_URL` does not automatically connect those flows to the API.
+API mode is the default. `src/lib/api/backend.ts` adapts the backend contract, persists guest
+ownership tokens, normalizes cart/order responses and handles checkout replay/recovery.
+The browser client is rebuilt by `scripts/build-storefront.mjs` before dev/build.
 
-To test API requests, the frontend still needs an API client and feature calls wired to the backend's OpenAPI endpoints. The value below is ready for that integration:
+Use `NEXT_PUBLIC_COMMERCE_MODE=preview` for isolated design work. Connected API failures
+are displayed to the user and never silently replaced by demo orders or catalogue data.
+The default API URL is:
 
 ```env
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api/v1
@@ -55,9 +61,11 @@ pnpm start     # Serve production build
 
 ## Important Files
 
-- `src/app/page.tsx` - Root route that loads the exact reference design
-- `public/special-affair-reference.html` - Byte-for-byte reference artifact
-- `src/app/(storefront)/page.tsx` - React storefront implementation kept as the maintainable app route
+- `src/app/page.tsx` - Root route and public runtime configuration
+- `src/components/storefront/Storefront.tsx` - Active React storefront
+- `src/components/storefront/CustomerFlows.tsx` - Account, returns, support and shopping help
+- `src/lib/api/backend.ts` - FastAPI transport adapter
+- `public/special-affair-reference.html` - Retained legacy prototype
 - `.env.example` - Safe environment template to share
 - `.env.local` - Local environment values; do not commit or share secrets
 

@@ -1,0 +1,58 @@
+<sc-if value="{{ commerceMessage }}" hint-placeholder-val="{{ false }}">
+  <div role="status" aria-live="polite" class="commerce-notice"><span>{{ commerceMessage }}</span><button sc-camel-on-click="{{ dismissMessage }}" aria-label="Dismiss message">×</button></div>
+</sc-if>
+<sc-if value="{{ commercePanel }}" hint-placeholder-val="{{ false }}">
+  <div class="commerce-backdrop" sc-camel-on-click="{{ closeCommerce }}"></div>
+  <section class="commerce-panel" role="dialog" aria-modal="true" aria-label="Customer services">
+    <sc-if value="{{ isPreview }}"><p>Frontend preview · No requests are sent to a store.</p></sc-if>
+    <button class="commerce-close" sc-camel-on-click="{{ closeCommerce }}" aria-label="Close customer services">Close ×</button>
+    <sc-if value="{{ showPayment }}" hint-placeholder-val="{{ false }}">
+      <h2>Payment</h2><p>{{ checkoutNotice }}</p>
+      <sc-if value="{{ isLive }}"><p>Complete payment with the secure provider, then return here to check your order status.</p><button class="commerce-action" sc-camel-on-click="{{ continueHostedPayment }}">Open secure payment</button></sc-if>
+      <sc-if value="{{ paymentFailed }}" hint-placeholder-val="{{ false }}"><p>Payment was declined.</p><button class="commerce-action" sc-camel-on-click="{{ retryPayment }}">Retry payment</button></sc-if>
+      <sc-if value="{{ isPreview }}"><button class="commerce-action" sc-camel-on-click="{{ authorizeSandbox }}">Preview successful payment</button>
+      <button sc-camel-on-click="{{ declineSandbox }}">Preview declined payment</button></sc-if>
+      <button sc-camel-on-click="{{ refreshPayment }}">Refresh payment status</button>
+    </sc-if>
+    <sc-if value="{{ showOrders }}" hint-placeholder-val="{{ false }}">
+      <h2>Your orders</h2><p>Orders from this guest session or your signed-in account.</p>
+      <sc-if value="{{ isPreview }}"><button sc-camel-on-click="{{ loadSampleOrder }}">Load sample delivered order</button></sc-if>
+      <sc-if value="{{ ordersEmpty }}" hint-placeholder-val="{{ false }}"><p>No orders yet.</p></sc-if>
+      <sc-for list="{{ orderRows }}" as="o" hint-placeholder-count="0">
+        <article class="commerce-order"><strong>{{ o.order_number }}</strong><p>{{ o.statusLabel }} · {{ o.total }}</p><p>{{ o.tracking }}</p>
+          <sc-if value="{{ o.canPay }}"><button sc-camel-on-click="{{ o.pay }}">Continue payment</button></sc-if>
+          <sc-if value="{{ o.canCancel }}"><button sc-camel-on-click="{{ o.cancel }}">Cancel order</button></sc-if>
+          <sc-if value="{{ o.canReturn }}"><button sc-camel-on-click="{{ o.requestReturn }}">Request return</button></sc-if>
+        </article>
+      </sc-for>
+      <sc-for list="{{ returnRows }}" as="r" hint-placeholder-count="0"><p>Return {{ r.id }} · {{ r.statusLabel }}</p></sc-for>
+    </sc-if>
+    <sc-if value="{{ showReturn }}" hint-placeholder-val="{{ false }}">
+      <h2>Request a return</h2><p>Choose item quantities to return. Use zero to keep an item. Our team will review eligibility.</p>
+      <sc-for list="{{ returnItems }}" as="item"><label>{{ item.name }}<input type="number" min="0" max="{{ item.max }}" value="{{ item.quantity }}" sc-camel-on-change="{{ item.change }}" aria-label="{{ item.name }} return quantity"></label></sc-for>
+      <label>Reason<textarea value="{{ returnReason }}" sc-camel-on-change="{{ setReturnReason }}" aria-label="Return reason" minlength="5" maxlength="1000"></textarea></label>
+      <button class="commerce-action" sc-camel-on-click="{{ submitReturn }}">Submit return request</button>
+    </sc-if>
+    <sc-if value="{{ showSupport }}" hint-placeholder-val="{{ false }}">
+      <h2>Contact the atelier</h2><label>Subject<input value="{{ supportSubject }}" sc-camel-on-change="{{ setSupportSubject }}" aria-label="Support subject" maxlength="160"></label>
+      <label>How can we help?<textarea value="{{ supportMessage }}" sc-camel-on-change="{{ setSupportMessage }}" aria-label="Support message" maxlength="5000"></textarea></label>
+      <button class="commerce-action" sc-camel-on-click="{{ submitSupport }}">Send request</button>
+    </sc-if>
+    <sc-if value="{{ showAccount }}" hint-placeholder-val="{{ false }}">
+      <h2>Your account</h2><button sc-camel-on-click="{{ login }}">Sign in / Create account</button>
+      <sc-if value="{{ accountSignedIn }}" hint-placeholder-val="{{ false }}">
+        <label>Name<input value="{{ profileName }}" sc-camel-on-change="{{ setProfileName }}" aria-label="Profile name"></label>
+        <button class="commerce-action" sc-camel-on-click="{{ saveProfile }}">Save profile</button>
+        <button sc-camel-on-click="{{ requestExport }}">Request a copy of my data</button>
+        <button sc-camel-on-click="{{ requestErasure }}">Request account erasure</button>
+        <button sc-camel-on-click="{{ logout }}">Sign out</button>
+      </sc-if>
+      <button sc-camel-on-click="{{ openOrders }}">View orders</button><button sc-camel-on-click="{{ unsubscribe }}">Withdraw marketing consent</button>
+    </sc-if>
+    <sc-if value="{{ showNewsletter }}" hint-placeholder-val="{{ false }}">
+      <h2>Private notes</h2><p>Join us for collection previews and atelier stories. By subscribing, you consent to marketing emails. You can withdraw consent in Your account.</p>
+      <label>Email<input type="email" value="{{ newsletterEmail }}" sc-camel-on-change="{{ setNewsletterEmail }}" aria-label="Newsletter email"></label>
+      <button class="commerce-action" sc-camel-on-click="{{ subscribe }}">Subscribe</button>
+    </sc-if>
+  </section>
+</sc-if>

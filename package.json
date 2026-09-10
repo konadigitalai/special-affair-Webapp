@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/build-storefront.mjs && next dev",
+    "build": "node scripts/build-storefront.mjs && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:frontend": "node scripts/test-frontend.mjs"
   },
   "dependencies": {
+    "@auth0/auth0-spa-js": "^2.24.1",
     "next": "16.3.4",
     "react": "19.2.8",
     "react-dom": "19.2.8"

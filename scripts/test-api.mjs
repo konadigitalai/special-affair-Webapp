@@ -1,0 +1,72 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import { webcrypto } from 'node:crypto';
+import ts from 'typescript';
+
+const base = process.env.TEST_API_URL;
+if (!base || !/^http:\/\/127\.0\.0\.1:18000\/api\/v1$/.test(base)) throw Error('This test requires the isolated test API at 127.0.0.1:18000.');
+const source = ['backend.ts', 'client.ts'].map(file => fs.readFileSync(new URL('../src/lib/api/' + file, import.meta.url), 'utf8')).join('\n');
+const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None } }).outputText;
+const storage = new Map();
+function browser() {
+  const window = { CommerceConfig: { mode: 'api', api: base } };
+  vm.runInContext(code, vm.createContext({ window, location: { search: '' }, URLSearchParams, URL, crypto: webcrypto,
+    localStorage: { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value) },
+    structuredClone, fetch, AbortSignal, TextEncoder, console }));
+  return window.CommerceAPI;
+}
+const api = browser();
+const call = (...args) => api.request(...args);
+await api.initialize();
+const products = (await call('/products')).items;
+const medium = products.find(p => p.slug === 'performance-t-shirt' && p.size === 'M');
+const large = products.find(p => p.slug === 'performance-t-shirt' && p.size === 'L');
+assert.ok(medium && large && medium.id !== large.id, 'Each garment size is a real variant');
+await call(`/wishlist/items/${medium.id}`, 'PUT');
+assert.ok((await browser().request('/wishlist')).variant_ids.includes(medium.id), 'Wishlist persists in the backend across reloads');
+await call(`/wishlist/items/${medium.id}`, 'DELETE');
+assert.equal((await call('/wishlist')).variant_ids.length, 0);
+let bag = await call('/carts', 'POST');
+bag = await call(`/carts/${bag.id}/items`, 'POST', { variant_id: medium.id, quantity: 2, version: bag.version });
+bag = await call(`/carts/${bag.id}/items`, 'POST', { variant_id: large.id, quantity: 1, version: bag.version });
+assert.equal(bag.items.length, 2);
+assert.equal(bag.items.find(i => i.id === medium.id).size, 'M');
+assert.equal((await browser().request('/carts', 'POST')).id, bag.id, 'Cart survives a browser reload');
+bag = await call(`/carts/${bag.id}/items`, 'POST', { variant_id: large.id, quantity: 0, version: bag.version });
+assert.equal(bag.items.length, 1, 'Zero quantity uses the backend DELETE item endpoint');
+await assert.rejects(call(`/carts/${bag.id}/coupon`, 'POST', { code: 'INVALID' }), /coupon/i);
+const payload = { cart_id: bag.id, email: 'integration@example.com', payment_method: 'cod', expected_total_minor: bag.total_minor,
+  address: { name: 'Integration Test', street: '12 Test Street', city: 'Hyderabad', state: 'Telangana', postal_code: '500001', phone: '9876543210' } };
+const first = await call('/checkout', 'POST', payload);
+assert.equal(first.status, 'confirmed');
+assert.equal((await call('/checkout', 'POST', payload)).order_id, first.order_id, 'Checkout retries reuse one idempotency key');
+const access = await call(`/orders/${first.order_id}/access`);
+assert.ok(access.order_token);
+let orders = (await browser().request('/orders')).items;
+assert.equal(orders.find(o => o.id === first.order_id).items[0].title_snapshot, 'Performance T-shirt / Black / M');
+await call(`/orders/${first.order_id}/cancel`, 'POST');
+assert.equal((await call(`/orders/${first.order_id}`)).status, 'cancelled');
+bag = await call('/carts', 'POST');
+assert.equal(bag.items.length, 0);
+bag = await call(`/carts/${bag.id}/items`, 'POST', { variant_id: large.id, quantity: 1, version: bag.version });
+const pending = await call('/checkout', 'POST', { ...payload, cart_id: bag.id, expected_total_minor: bag.total_minor, payment_method: 'upi' });
+assert.equal(pending.payment.provider, 'sandbox');
+await call(`/orders/${pending.order_id}/sandbox-payment/${pending.payment_attempt_id}`, 'POST', { status: 'failed' });
+assert.equal((await call(`/orders/${pending.order_id}`)).status, 'payment_failed');
+const retry = await call(`/orders/${pending.order_id}/retry-payment`, 'POST');
+await call(`/orders/${pending.order_id}/sandbox-payment/${retry.payment.payment_attempt_id}`, 'POST', { status: 'captured' });
+assert.equal((await call(`/orders/${pending.order_id}`)).status, 'confirmed');
+await call('/guest-order', 'POST', { id: first.order_id, token: access.order_token });
+await assert.rejects(call('/guest-order', 'POST', { id: first.order_id, token: 'wrong' }), /not found/i);
+await call('/consents', 'POST', { email: 'integration@example.com', granted: true });
+await call('/consents', 'POST', { email: 'integration@example.com', granted: false });
+const support = await call('/support', 'POST', { email: 'integration@example.com', subject: 'Integration sizing question', message: 'Please confirm the measurements for this sample.' });
+await call(`/support/cases/${support.id}/messages`, 'POST', { body: 'Thank you; this is a local integration test.' });
+const cases = (await call('/support-history')).items;
+assert.equal(cases.find(c => c.id === support.id).messages.length, 2);
+await assert.rejects(call('/account'), /bearer|sign|token/i);
+const answer = await call('/copilot/chat', 'POST', { message: 'Show me a performance t-shirt' });
+assert.ok(answer.answer && answer.session_token);
+assert.ok(![...storage.values()].join('').includes('integration@example.com'), 'PII is never saved in browser transport storage');
+console.log('Connected frontend/API flow passed: catalogue, real sizes, persistent cart, removal, totals, checkout replay, COD, cancellation, sandbox decline/retry/capture, guest access, newsletter, support and copilot.');

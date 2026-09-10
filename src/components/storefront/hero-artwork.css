@@ -1,0 +1,165 @@
+.hero-scene {
+  container-type: size;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  --scene-scroll: 0;
+}
+.scene-canvas {
+  position: absolute;
+  width: max(100cqw, 177.68cqh);
+  height: max(56.28cqw, 100cqh);
+  max-width: none;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+}
+@media(max-width:800px) { .scene-canvas { left: calc(61cqw - max(100cqw,177.68cqh) * .11); } }
+@media(max-width:480px) { .scene-canvas { left: calc(62cqw - max(100cqw,177.68cqh) * .12); } }
+.hero-scene img {
+  object-fit: cover;
+  object-position: center;
+}
+.scene-poster {
+  transition: opacity 0.65s ease;
+}
+.scene-wall,
+.scene-models,
+.scene-models-entrance,
+.scene-models-float,
+.scene-sunlight {
+  position: absolute;
+  inset: 0;
+}
+.scene-wall,
+.scene-models,
+.scene-sunlight {
+  opacity: 0;
+  transition:
+    opacity 0.65s ease,
+    transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.scene-ready .scene-wall,
+.scene-ready .scene-models,
+.scene-ready .scene-sunlight {
+  opacity: 1;
+}
+.scene-ready .scene-poster {
+  opacity: 0;
+}
+.scene-wall {
+  transform: translate3d(
+      calc(var(--hero-x, 0px) * -0.65),
+      calc(var(--hero-y, 0px) * -0.4 + var(--scene-scroll) * 60px),
+      0
+    )
+    scale(1.075);
+}
+.scene-wall img {
+  animation: wall-travel 16s ease-in-out infinite alternate;
+}
+.scene-models {
+  transform: translate3d(
+      calc(var(--hero-x, 0px) * 1.8),
+      calc(var(--hero-y, 0px) * 1.2 - var(--scene-scroll) * 35px),
+      0
+    )
+    scale(1.035);
+  transform-origin: 75% 100%;
+}
+.scene-models-entrance {
+  animation: models-arrive 2.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.scene-models-float {
+  animation: models-breathe 8s ease-in-out 2.2s infinite alternate;
+}
+.scene-sunlight {
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 20%,
+    rgba(255, 239, 214, 0.12) 46%,
+    transparent 66%
+  );
+  mix-blend-mode: soft-light;
+  animation: sunlight-pass 12s ease-in-out infinite alternate;
+}
+@keyframes models-arrive {
+  from {
+    transform: translate3d(55px, 14px, 0) scale(1.04);
+    opacity: 0;
+  }
+  to {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+  }
+}
+@keyframes models-breathe {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-14px, -5px, 0);
+  }
+}
+@keyframes wall-travel {
+  from {
+    transform: translate3d(-7px, 0, 0) scale(1.025);
+  }
+  to {
+    transform: translate3d(9px, 4px, 0) scale(1.045);
+  }
+}
+@keyframes sunlight-pass {
+  from {
+    transform: translateX(-20%);
+    opacity: 0.25;
+  }
+  to {
+    transform: translateX(15%);
+    opacity: 0.8;
+  }
+}
+.hero-scene:not(.scene-ready) *,
+.is-paused .hero-scene * {
+  animation-play-state: paused;
+}
+.is-paused .scene-wall,
+.is-paused .scene-models {
+  transition: none;
+}
+@media (max-width: 800px) {
+  .hero-scene img {
+    object-position: 61% center;
+  }
+  .scene-models {
+    transform: translate3d(0, calc(var(--scene-scroll) * -18px), 0) scale(1.02);
+  }
+  .scene-wall {
+    transform: translate3d(0, calc(var(--scene-scroll) * 30px), 0) scale(1.075);
+  }
+  @keyframes models-arrive {
+    from {
+      transform: translate3d(24px, 10px, 0);
+      opacity: 0;
+    }
+    to {
+      transform: translate3d(0, 0, 0);
+      opacity: 1;
+    }
+  }
+}
+@media (max-width: 480px) {
+  .hero-scene img {
+    object-position: 62% center;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-scene .scene-poster {
+    opacity: 1;
+  }
+  .scene-wall,
+  .scene-models,
+  .scene-sunlight {
+    display: none;
+  }
+}
