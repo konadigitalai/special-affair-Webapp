@@ -17,6 +17,10 @@ const names = [
   "Lounge Pant",
 ];
 const prices = [2490, 1990, 2290, 3490, 4490, 2490];
+const sitePages = {
+  "size-guide": { title: "Size guide", apiSlug: "size-guide" },
+  "shipping-returns": { title: "Shipping & returns", apiSlug: "shipping" },
+} as const;
 const initialProducts: StoreProduct[] = names.map((name, i) => ({
   id: `preview-variant-${i}`,
   product_id: `preview-product-${i}`,
@@ -135,7 +139,7 @@ export default function Storefront({
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [stories, setStories] = useState<JournalStory[]>([]);
   const [storyImage, setStoryImage] = useState("/images/flagship/material.webp");
-  const announcement = products.some(p => p.development_sample) ? "DEVELOPMENT STORE · SAMPLE APPAREL FOR REVIEW" : "CRAFTED FOR EVERY AFFAIR";
+  const [announcement, setAnnouncement] = useState("FREE SHIPPING ON ALL ORDERS ABOVE ₹5,000");
   const request = async <T,>(
     path: string,
     method = "GET",
@@ -150,10 +154,16 @@ export default function Storefront({
         const auth = await window.CommerceAPI.initialize();
         if (live) { setAuthenticated(auth.authenticated); setAuthConfigured(auth.configured); }
         if (!preview) {
-          const settings = await window.CommerceAPI.request("/commerce/config") as typeof commerce;
-          if (live) setCommerce(settings);
-          const journal = await window.CommerceAPI.request("/stories") as { items: JournalStory[] };
-          if (live) setStories(journal.items.map(s => ({ ...s, category: ({ "a-different-kind-of-movement": "Places", "material-matters": "Material", "the-first-affair": "Culture", "people-in-motion": "People", "a-closer-look": "Movement", "our-philosophy": "Culture" } as Record<string, string>)[s.slug] || "Culture" })));
+          const [commerceSettings, homepage, journal] = await Promise.all([
+            window.CommerceAPI.request("/commerce/config") as Promise<typeof commerce>,
+            window.CommerceAPI.request("/home") as Promise<{ settings?: { announcement?: { text?: string } } }>,
+            window.CommerceAPI.request("/stories") as Promise<{ items: JournalStory[] }>,
+          ]);
+          if (live) {
+            setCommerce(commerceSettings);
+            setAnnouncement(homepage.settings?.announcement?.text || "FREE SHIPPING ON ALL ORDERS ABOVE ₹5,000");
+            setStories(journal.items.map(s => ({ ...s, category: ({ "a-different-kind-of-movement": "Places", "material-matters": "Material", "the-first-affair": "Culture", "people-in-motion": "People", "a-closer-look": "Movement", "our-philosophy": "Culture" } as Record<string, string>)[s.slug] || "Culture" })));
+          }
         }
         const [catalog, bag] = await Promise.all([
           window.CommerceAPI.request("/products"),
@@ -200,11 +210,13 @@ export default function Storefront({
     const restore = () => {
       const [section, slug] = location.pathname.split("/").filter(Boolean);
       const panels: Record<string, Panel> = { bag: "bag", checkout: "checkout", account: "account", search: "search", orders: "orders", wishlist: "wishlist", contact: "support" };
+      const sitePage = sitePages[section as keyof typeof sitePages];
       if (section === "products") {
         const variant = new URLSearchParams(location.search).get("variant");
         const item = products.find(p => p.slug === slug && p.id === variant) || products.find(p => p.slug === slug);
         if (item) { setProduct(item); setPanel("product"); }
       } else if (panels[section]) { setPanel(panels[section]); if (section === "orders") void perform(refreshOrders); }
+      else if (sitePage) storyPanel(sitePage.title, sitePage.apiSlug, false);
       else { setPanel(null); setView(section === "collections" ? worldPages.find(w => w.name.toLowerCase().replaceAll(" ", "-") === slug)?.name || "Shop" : ({shop:"Shop",new:"New",journal:"Journal",about:"About"} as Record<string,string>)[section] || "House"); }
     };
     restore(); window.addEventListener("popstate", restore);
@@ -278,6 +290,14 @@ export default function Storefront({
       }),
     );
   }
+  function quickAdd(item: StoreProduct) {
+    const variant = products.find(candidate => candidate.product_id === item.product_id && candidate.colour === item.colour && candidate.available > 0) || item;
+    void perform(async () => {
+      const existing = cart?.items.find(cartItem => cartItem.id === variant.id)?.quantity || 0;
+      await quantity(variant, existing + 1);
+      setNotice(`${variant.name} added to your bag.`);
+    });
+  }
   function showOrders() {
     open("orders");
     void perform(async () =>
@@ -304,18 +324,20 @@ export default function Storefront({
   function card(item: StoreProduct) {
     return <ProductCard key={item.id} item={item} products={products} onProduct={showProduct} saved={wishlist.some(id => products.some(p => p.id === id && p.product_id === item.product_id))} onSave={item => void toggleWishlist(item)} />;
   }
-  function storyPanel(title: string, suppliedSlug?: string) {
+  function storyPanel(title: string, suppliedSlug?: string, updateRoute = true) {
     setStory(title); setStoryContent(""); open("story");
+    const contentRoute = Object.entries(sitePages).find(([, page]) => page.title === title)?.[0];
+    if (updateRoute && contentRoute) window.history.pushState({}, "", `/${contentRoute}`);
     if (!preview) void perform(async () => {
       const slug = suppliedSlug || title.toLowerCase().replaceAll(" ", "-");
-      const page = await request<{ body: string; hero_url?: string }>(["Terms", "Privacy", "Shipping", "Size guide"].includes(title) ? `/pages/${slug}` : `/stories/${slug}`);
+      const page = await request<{ body: string; hero_url?: string }>(["terms", "privacy", "shipping", "size-guide"].includes(slug) ? `/pages/${slug}` : `/stories/${slug}`);
       setStoryContent(page.body); setStoryImage(page.hero_url || "/images/flagship/material.webp");
     });
   }
 
   return (
     <div ref={store} className="store flagship-store">
-      <Flagship view={view} navigate={navigate} products={products} ready={ready} busy={busy} count={count} onProduct={showProduct} onPanel={open} onStory={storyPanel} stories={stories} wishlist={wishlist} onSave={item => void toggleWishlist(item)} announcement={announcement} newsletter={email => void perform(async () => { await request("/consents", "POST", { email, granted: true, purpose: "newsletter" }); setNotice("Thank you for joining the affair."); })} />
+      <Flagship view={view} navigate={navigate} products={products} ready={ready} busy={busy} count={count} onProduct={showProduct} onQuickAdd={quickAdd} onPanel={open} onStory={storyPanel} stories={stories} wishlist={wishlist} onSave={item => void toggleWishlist(item)} announcement={announcement} newsletter={email => void perform(async () => { await request("/consents", "POST", { email, granted: true, purpose: "newsletter" }); setNotice("Thank you for joining the affair."); })} />
       {!panel && (error || notice) && (
         <div className="toast" role={error ? "alert" : "status"}>
           {error || notice}
@@ -638,6 +660,7 @@ export default function Storefront({
               </button>
               {!preview && !authConfigured && <p className="development-note">Account sign-in is awaiting the store?s identity configuration. Guest checkout and guest order access are available.</p>}
               <button className="account-link" onClick={() => open("wishlist")}>Wishlist &rarr;</button>
+              <button className="account-link" onClick={() => open("help")}>Shopping help &rarr;</button>
               {!preview && authenticated && <AccountDetails request={request} perform={perform} busy={busy} />}
               <button className="account-link" onClick={showOrders}>
                 Orders & returns ⟶
@@ -808,7 +831,7 @@ export default function Storefront({
                   ? "We believe confidence begins closest to the body and radiates outward. Special Affair is a contemporary lifestyle house: different worlds, connected by a shared language of simplicity, movement and quiet expression."
                   : story === "Size guide"
                     ? "The collection preview offers XS–XL. Product-specific measurements and fit advice will be added with the final catalogue."
-                    : story === "Shipping"
+                    : story === "Shipping & returns"
                       ? "Shipping estimates, charges and return windows will be provided by the connected store before purchase. This frontend preview does not ship physical products."
                       : story === "Privacy"
                         ? "Preview bag and simulated orders are stored in this browser. Contact and address form data are not saved to preview storage. The production privacy policy will be supplied before launch."

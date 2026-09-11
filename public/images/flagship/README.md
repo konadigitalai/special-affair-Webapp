@@ -1,6 +1,6 @@
 ﻿# Original flagship photography
 
-Ten original images were generated for the client mockup implementation. Each WebP is an optimized delivery copy; the original PNG is kept in `originals/`. `prompts.json` records every prompt and actual pixel dimensions. No image was upscaled to claim a larger source resolution.
+Eighteen original images were generated for the client mockup implementation. The first delivery set is optimized as WebP with source PNGs in `originals/`; the client-reference additions remain as measured HD PNGs. `prompts.json` records every prompt and actual pixel dimensions. No image was upscaled to claim a larger source resolution.
 
 - `first-affair`, `inner-affair`, `essential-affair`, `form`, `shell`: homepage and collection campaigns.
 - `first-affair-motion`: refined 2560 x 1440 homepage master with cleaner detail and
@@ -9,4 +9,8 @@ Ten original images were generated for the client mockup implementation. Each We
 - `coast`: journal landscape.
 - `core-bra`, `core-bra-ivory`, `move-legging`: product-specific development packshots.
 
-The remaining development apparel uses the individually generated catalogue photographs in `../catalog/`. All images illustrate development apparel; they do not certify real garment construction, fit or fabric specifications. The campaign animation uses CSS and supports pause/reduced motion; no video was supplied.
+The remaining development apparel uses the individually generated catalogue photographs in `../catalog/`. All images illustrate development apparel; they do not certify real garment construction, fit or fabric specifications.
+
+The client-reference homepage uses eight additional original HD assets generated with the built-in image generation tool: `first-affair-hero-hd-v2.png`, `inner-affair-hd-v2.png`, `essential-affair-hd-v2.png`, `movement-film-hd-v2.png`, plus isolated product studies for the tee, shorts, hoodie, and relaxed pant. Their normalized production prompts and measured dimensions are recorded in `prompts.json`.
+
+The homepage uses the silent seamless 10-second `../../videos/first-affair-loop-v2.webm` motion study derived from `first-affair-hero-hd-v2.png`; that still remains its poster and reduced-motion fallback. The final approved campaign film can replace the WebM at the same path without changing the interface.

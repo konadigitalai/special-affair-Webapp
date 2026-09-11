@@ -58,5 +58,53 @@
     "prompt": "Generate one original ultra high resolution portrait ecommerce product photograph of an IVORY ribbed longline sports bra, front view invisible mannequin still-life with no person or body, scoop neck, broad racerback straps, substantial elastic underband. Full garment centered and fully in frame with generous 15 percent margin. Warm light grey seamless studio backdrop, soft realistic shadow, premium cream cotton knit texture. Shape must have the classic scoop front and supportive straight underband of a simple yoga sports bra. No text, no logo, no tag, no watermark, no collage.",
     "width": 1145,
     "height": 1374
+  },
+  {
+    "key": "first-affair-hero-hd-v2",
+    "prompt": "Original photorealistic premium sportswear homepage hero: one adult South Asian female athlete seen from behind in a plain black racerback top, overlooking a softly blurred Indian city at warm sunrise. Very wide 16:9, subject center-right, generous dark negative space on the left for UI copy, restrained charcoal and amber palette, authentic skin and perspiration texture, no text, logos, monograms or watermark.",
+    "width": 1672,
+    "height": 941
+  },
+  {
+    "key": "inner-affair-hd-v2",
+    "prompt": "Original photorealistic quiet-luxury activewear category portrait: one adult South Asian female athlete in a modest ivory ribbed high-neck training crop top and cream track pants against a warm stone studio wall. Vertical 4:5, tactile fabric and natural skin texture, soft late-afternoon light, no text, logos, monograms or watermark.",
+    "width": 1121,
+    "height": 1403
+  },
+  {
+    "key": "essential-affair-hd-v2",
+    "prompt": "Original photorealistic quiet-luxury essentials category image: close view of one adult South Asian man in a heavyweight off-white oversized crew-neck T-shirt against warm gray plaster. Vertical 4:5, premium cotton drape and construction in focus, muted ecru and charcoal palette, no text, logos, monograms or watermark.",
+    "width": 1122,
+    "height": 1402
+  },
+  {
+    "key": "movement-film-hd-v2",
+    "prompt": "Original photorealistic black-and-white sports documentary film still: one adult South Asian female athlete seen from behind after training in a plain black racerback top, subject on the right with dark negative space left, directional light on realistic perspiration and shoulder texture, wide 16:9, no text, logos, monograms or watermark.",
+    "width": 1672,
+    "height": 941
+  },
+  {
+    "key": "essential-tee-packshot-hd-v2",
+    "prompt": "Original premium studio product photograph of one plain ivory-white heavyweight crew-neck T-shirt, presented front-on as an empty invisible-mannequin still life against light warm gray, complete garment visible, soft diffuse light, no person, text, tags, logos or watermark.",
+    "width": 1122,
+    "height": 1402
+  },
+  {
+    "key": "active-short-packshot-hd-v2",
+    "prompt": "Original premium studio product photograph of one pair of plain black active training shorts, presented front-on as an empty invisible-mannequin still life against light warm gray, authentic matte fabric, no person, text, logos or watermark.",
+    "width": 1122,
+    "height": 1402
+  },
+  {
+    "key": "hoodie-packshot-hd-v2",
+    "prompt": "Original premium studio product photograph of one plain warm-gray heavyweight pullover hoodie with structured hood, kangaroo pocket and rib trim, presented front-on as an empty invisible-mannequin still life against light warm gray, no person, text, logos or watermark.",
+    "width": 1122,
+    "height": 1402
+  },
+  {
+    "key": "relaxed-pant-packshot-hd-v2",
+    "prompt": "Original premium studio product photograph of one pair of plain black relaxed straight-leg lounge pants with elastic waist, full garment front-on against light warm gray, realistic matte cotton drape, no person, text, logos or watermark.",
+    "width": 1122,
+    "height": 1402
   }
 ]
