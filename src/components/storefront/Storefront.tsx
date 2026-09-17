@@ -93,7 +93,6 @@ function Photo({
 type Panel =
   | "wishlist"
   | "bag"
-  | "product"
   | "search"
   | "account"
   | "checkout"
@@ -130,7 +129,7 @@ export default function Storefront({
   } | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
   const [authConfigured, setAuthConfigured] = useState(false);
-  const [commerce, setCommerce] = useState({ sandbox_payments: false, payment_methods: ["cod"] });
+  const [commerce, setCommerce] = useState<{ sandbox_payments: boolean; payment_methods: string[]; return_window_days?: number }>({ sandbox_payments: false, payment_methods: ["cod"] });
   const [savedAddresses, setSavedAddresses] = useState<{ id: string; full_name: string; street: string; city: string; state: string; pin_code: string }[]>([]);
   const [storyContent, setStoryContent] = useState("");
   const [story, setStory] = useState("Our philosophy");
@@ -206,15 +205,16 @@ export default function Storefront({
     };
   }, [panel]);
   useEffect(() => {
-    if (!ready) return;
     const restore = () => {
       const [section, slug] = location.pathname.split("/").filter(Boolean);
+      // Direct product links show the product page immediately instead of the homepage while the catalogue loads.
+      if (!ready) { if (section === "products") setView("Product"); return; }
       const panels: Record<string, Panel> = { bag: "bag", checkout: "checkout", account: "account", search: "search", orders: "orders", wishlist: "wishlist", contact: "support" };
       const sitePage = sitePages[section as keyof typeof sitePages];
       if (section === "products") {
         const variant = new URLSearchParams(location.search).get("variant");
         const item = products.find(p => p.slug === slug && p.id === variant) || products.find(p => p.slug === slug);
-        if (item) { setProduct(item); setPanel("product"); }
+        setProduct(item || null); setPanel(null); setView("Product");
       } else if (panels[section]) { setPanel(panels[section]); if (section === "orders") void perform(refreshOrders); }
       else if (sitePage) storyPanel(sitePage.title, sitePage.apiSlug, false);
       else { setPanel(null); setView(section === "collections" ? worldPages.find(w => w.name.toLowerCase().replaceAll(" ", "-") === slug)?.name || "Shop" : ({shop:"Shop",new:"New",journal:"Journal",about:"About"} as Record<string,string>)[section] || "House"); }
@@ -249,24 +249,30 @@ export default function Storefront({
       void perform(async () => setSavedAddresses((await request<{ items: typeof savedAddresses }>("/customers/me/addresses")).items));
     }
   }
+  function viewRoute(target: string, item: StoreProduct | null = product) {
+    if (target === "Product") return item ? `/products/${item.slug}?variant=${item.id}` : "/shop";
+    return target === "House" ? "/" : worldPages.some(w => w.name === target) ? "/collections/" + target.toLowerCase().replaceAll(" ", "-") : "/" + target.toLowerCase();
+  }
   function navigate(next: string) {
     setView(next);
-    const route = next === "House" ? "/" : worldPages.some(w => w.name === next) ? "/collections/" + next.toLowerCase().replaceAll(" ", "-") : "/" + next.toLowerCase();
-    window.history.pushState({}, "", route);
+    window.history.pushState({}, "", viewRoute(next));
     setQuery("");
     setPanel(null);
     window.scrollTo({ top: 0, behavior: "instant" });
   }
   function closePanel() {
     setPanel(null);
-    const route = view === "House" ? "/" : worldPages.some(w => w.name === view) ? "/collections/" + view.toLowerCase().replaceAll(" ", "-") : "/" + view.toLowerCase();
-    window.history.pushState({}, "", route);
+    window.history.pushState({}, "", viewRoute(view));
   }
   function showProduct(item: StoreProduct) {
     setProduct(item);
-    open("product");
-    window.history.pushState({}, "", `/products/${item.slug}?variant=${item.id}`);
-    dialog.current?.scrollTo({ top: 0 });
+    setError("");
+    setNotice("");
+    setPanel(null);
+    const sameProduct = view === "Product" && product?.product_id === item.product_id;
+    setView("Product");
+    window.history[sameProduct ? "replaceState" : "pushState"]({}, "", viewRoute("Product", item));
+    if (!sameProduct) window.scrollTo({ top: 0, behavior: "instant" });
   }
   async function toggleWishlist(item: StoreProduct) {
     if (preview) { setWishlist(current => current.includes(item.id) ? current.filter(id => id !== item.id) : [...current, item.id]); return; }
@@ -337,7 +343,10 @@ export default function Storefront({
 
   return (
     <div ref={store} className="store flagship-store">
-      <Flagship view={view} navigate={navigate} products={products} ready={ready} busy={busy} count={count} onProduct={showProduct} onQuickAdd={quickAdd} onPanel={open} onStory={storyPanel} stories={stories} wishlist={wishlist} onSave={item => void toggleWishlist(item)} announcement={announcement} newsletter={email => void perform(async () => { await request("/consents", "POST", { email, granted: true, purpose: "newsletter" }); setNotice("Thank you for joining the affair."); })} />
+      <Flagship view={view} navigate={navigate} products={products} ready={ready} busy={busy} count={count} onProduct={showProduct} onQuickAdd={quickAdd} onPanel={open} onStory={storyPanel} stories={stories} wishlist={wishlist} onSave={item => void toggleWishlist(item)} announcement={announcement} newsletter={email => void perform(async () => { await request("/consents", "POST", { email, granted: true, purpose: "newsletter" }); setNotice("Thank you for joining the affair."); })}>
+        {view === "Product" && product && <ProductDetail key={product.product_id} product={product} products={products} wishlist={wishlist} onVariant={showProduct} onSave={item => void toggleWishlist(item)} onQuickAdd={quickAdd} onNavigate={navigate} onStory={storyPanel} saved={wishlist.some(id => products.some(p => p.id === id && p.product_id === product.product_id))} ready={ready} busy={busy} returnWindowDays={commerce.return_window_days} onAdd={amount => void perform(async () => { await quantity(product, (cart?.items.find(i => i.id === product.id)?.quantity || 0) + amount); open("bag"); })} />}
+        {view === "Product" && !product && <section className="pdp-missing">{ready ? <><h1>This piece could not be found.</h1><button className="underlined-link" onClick={() => navigate("Shop")}>Back to the collection →</button></> : <p className="empty-state">Loading the piece…</p>}</section>}
+      </Flagship>
       {!panel && (error || notice) && (
         <div className="toast" role={error ? "alert" : "status"}>
           {error || notice}
@@ -355,7 +364,7 @@ export default function Storefront({
 
       <dialog
         ref={dialog}
-        className={`store-dialog ${panel === "product" ? "product-dialog" : ""}`}
+        className="store-dialog"
         onCancel={closePanel}
         onClick={(e) => {
           if (e.target === e.currentTarget) closePanel();
@@ -374,7 +383,6 @@ export default function Storefront({
             </button>
           </div>
           {panel && ["bag", "checkout", "account", "wishlist", "orders"].includes(panel) && <div className="utility-campaign"><CampaignPhoto name={panel === "checkout" ? "form" : panel === "account" ? "shell" : "first-affair"} alt="Special Affair campaign" /><h2>{({ bag: "Your cart", checkout: "Checkout", account: "My account", wishlist: "My wishlist", orders: "Your orders" } as Record<string, string>)[panel]}</h2></div>}
-          {panel === "product" && product && <ProductDetail key={product.product_id} product={product} products={products} wishlist={wishlist} onVariant={showProduct} onSave={item => void toggleWishlist(item)} saved={wishlist.some(id => products.some(p => p.id === id && p.product_id === product.product_id))} ready={ready} busy={busy} onAdd={amount => void perform(async () => { await quantity(product, (cart?.items.find(i => i.id === product.id)?.quantity || 0) + amount); open("bag"); })} />}
           {panel === "wishlist" && <><h2>My wishlist.</h2><p>For what comes next.</p><div className="wishlist-grid">{products.filter(p => wishlist.includes(p.id)).map(card)}</div>{!wishlist.length && <p className="empty-state">Save the pieces you love with the heart on any product.</p>}</>}
           {panel === "bag" && (
             <>

@@ -13,10 +13,21 @@ export const metadata: Metadata = {
 type Product = {
   id: string;
   name: string;
-  category?: string;
-  colour?: string;
-  price_minor?: number;
-  available?: number;
+  category: string;
+  colours: string[];
+  price_minor: number;
+  max_price_minor: number;
+  available: number;
+};
+
+type CatalogVariant = {
+  id: string;
+  product_id: string;
+  name: string;
+  category: string;
+  colour: string;
+  price_minor: number;
+  available: number;
 };
 
 type StoreSnapshot = {
@@ -28,14 +39,43 @@ async function getStoreSnapshot(): Promise<StoreSnapshot> {
   const api = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
 
   try {
-    const response = await fetch(api + "/products", {
-      cache: "no-store",
-      signal: AbortSignal.timeout(2500),
-    });
-    if (!response.ok) return { connected: false, products: [] };
+    const products = new Map<string, Product>();
+    const variants = new Set<string>();
+    let offset = 0;
+    for (;;) {
+      const response = await fetch(`${api}/storefront/catalog?limit=100&offset=${offset}`, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!response.ok) return { connected: false, products: [] };
 
-    const result = (await response.json()) as { items?: Product[] };
-    return { connected: true, products: result.items || [] };
+      const result = (await response.json()) as { items: CatalogVariant[]; has_more: boolean; next_offset: number };
+      for (const variant of result.items) {
+        if (variants.has(variant.id)) continue;
+        variants.add(variant.id);
+        const product = products.get(variant.product_id);
+        if (product) {
+          product.available += variant.available;
+          product.price_minor = Math.min(product.price_minor, variant.price_minor);
+          product.max_price_minor = Math.max(product.max_price_minor, variant.price_minor);
+          if (variant.colour && !product.colours.includes(variant.colour)) product.colours.push(variant.colour);
+        } else {
+          products.set(variant.product_id, {
+            id: variant.product_id,
+            name: variant.name,
+            category: variant.category,
+            colours: variant.colour ? [variant.colour] : [],
+            price_minor: variant.price_minor,
+            max_price_minor: variant.price_minor,
+            available: variant.available,
+          });
+        }
+      }
+      if (!result.has_more) break;
+      if (!Number.isInteger(result.next_offset) || result.next_offset <= offset) throw new Error("Invalid catalogue pagination.");
+      offset = result.next_offset;
+    }
+    return { connected: true, products: [...products.values()] };
   } catch {
     return { connected: false, products: [] };
   }
@@ -145,9 +185,9 @@ export default async function AdminDashboard() {
                 <tbody>
                   {products.slice(0, 8).map((product) => (
                     <tr key={product.id}>
-                      <td><strong>{product.name}</strong><small>{product.colour || "—"}</small></td>
+                      <td><strong>{product.name}</strong><small>{product.colours.join(", ") || "—"}</small></td>
                       <td>{product.category || "Unassigned"}</td>
-                      <td>{money(product.price_minor)}</td>
+                      <td>{product.max_price_minor > product.price_minor ? "From " : ""}{money(product.price_minor)}</td>
                       <td>{product.available ?? 0}</td>
                       <td><span className={(product.available || 0) > 5 ? "table-status good" : (product.available || 0) > 0 ? "table-status low" : "table-status out"}>{(product.available || 0) > 5 ? "Ready" : (product.available || 0) > 0 ? "Low" : "Unavailable"}</span></td>
                     </tr>

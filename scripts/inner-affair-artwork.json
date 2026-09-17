@@ -1,0 +1,170 @@
+[
+  {
+    "target": "public/images/inner-affair/hero-bed.png",
+    "size": "16:9",
+    "use": "Landing hero poster + hero film source",
+    "prompt": "Original photorealistic quiet-luxury intimates campaign photograph, wide 16:9. Close, cropped view of an adult South Asian woman lying on rumpled cream linen bedding in warm late-afternoon window light, seen from shoulder and ribcage only, no face: the focus is a taupe-grey ribbed cotton bralette strap and band crossing her shoulder and back, natural skin texture with a soft sheen. Subject fills the right two-thirds; the left third is softly blurred dark warm bedroom shadow for white headline text. Muted taupe, bronze, charcoal and cream palette. Modest and tasteful, no nudity. 85mm shallow depth of field, fine grain. No text, logo, watermark, collage or border."
+  },
+  {
+    "target": "public/images/inner-affair/boxer-brief.png",
+    "size": "4:5",
+    "use": "Boxer Brief card + PDP",
+    "prompt": "Photorealistic premium ecommerce still life of one pair of black cotton-modal men's boxer briefs, front view, laid flat, invisible-mannequin style with no person, soft elastic waistband fully visible, subtle rib texture, centred on a warm light-grey seamless studio backdrop with a soft natural shadow, generous margin. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/inner-affair/boxer-short.png",
+    "size": "4:5",
+    "use": "Boxer Short card + PDP",
+    "prompt": "Photorealistic premium ecommerce still life of one pair of heather-grey cotton men's boxer shorts with a covered elastic waistband, front view laid flat, no person, warm light-grey seamless studio backdrop, soft natural shadow, generous margin, visible woven texture. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/inner-affair/slim-tank.png",
+    "size": "4:5",
+    "use": "Slim Tank card + PDP",
+    "prompt": "Photorealistic premium ecommerce still life of one white ribbed cotton women's slim tank top with narrow straps, front view as an invisible mannequin with no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin, crisp rib texture. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/inner-affair/second-skin-tee.png",
+    "size": "4:5",
+    "use": "Second-Skin Tee card + PDP",
+    "prompt": "Photorealistic premium ecommerce still life of one black fitted crew-neck cotton-modal men's T-shirt, front view as an invisible mannequin with no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin, smooth second-skin jersey texture. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/inner-affair/bralette.png",
+    "size": "4:5",
+    "use": "Bralette card + PDP",
+    "prompt": "Photorealistic premium ecommerce still life of one taupe ribbed cotton women's bralette with soft triangle cups, thin straps and a wide underband, front view as an invisible mannequin with no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/inner-affair/brief.png",
+    "size": "4:5",
+    "use": "Brief card + PDP",
+    "prompt": "Photorealistic premium ecommerce still life of one pair of taupe ribbed cotton women's briefs with a mid-rise waistband, front view laid flat, no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin. Modest, tasteful catalogue photography. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/inner-affair/boy-short.png",
+    "size": "4:5",
+    "use": "Boy Short card + PDP",
+    "prompt": "Photorealistic premium ecommerce still life of one pair of black cotton-modal women's boy-short underwear, front view laid flat, no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin. Modest, tasteful catalogue photography. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/inner-affair/tank.png",
+    "size": "4:5",
+    "use": "Tank card + PDP",
+    "prompt": "Photorealistic premium ecommerce still life of one black cotton men's tank top with a classic scoop neck, front view as an invisible mannequin with no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/inner-affair/cami-set.png",
+    "size": "4:5",
+    "use": "Cami Set card + PDP",
+    "prompt": "Photorealistic premium ecommerce still life of a taupe ribbed cotton women's camisole and matching brief set, both pieces laid flat and neatly arranged together, no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin. Modest, tasteful catalogue photography. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/inner-affair/sleep-set.png",
+    "size": "4:5",
+    "use": "Sleep Set card + PDP",
+    "prompt": "Photorealistic premium ecommerce still life of a black cotton sleep set: a short-sleeve piped notch-collar pyjama shirt and matching drawstring shorts, laid flat and neatly folded together, no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/inner-affair/film-01.png",
+    "size": "16:9",
+    "use": "Film 01 poster + film source",
+    "prompt": "Original photorealistic intimates campaign detail, wide 16:9. Close crop of an adult South Asian man's waist and hip lying on rumpled cream linen in warm side light, wearing black cotton boxer briefs, focus on the soft elastic waistband and skin texture, modest and tasteful, no face, no nudity, dark warm bedroom shadow around. No text, logo, watermark, collage or border."
+  },
+  {
+    "target": "public/images/inner-affair/tile-fabrics.png",
+    "size": "16:9",
+    "use": "Fit tile: Fabrics",
+    "prompt": "Macro photograph of taupe finely ribbed cotton-modal fabric folded in soft diagonal waves, raking warm light, tactile fibres in sharp focus, muted quiet-luxury palette. No text, logo or watermark."
+  },
+  {
+    "target": "public/images/inner-affair/tile-fit.png",
+    "size": "16:9",
+    "use": "Fit tile: Fit",
+    "prompt": "Photorealistic close crop of a thin taupe bralette strap resting on an adult woman's bronze shoulder, warm window light, natural skin texture, no face, modest and tasteful. No text, logo or watermark."
+  },
+  {
+    "target": "public/images/inner-affair/tile-details.png",
+    "size": "16:9",
+    "use": "Fit tile: Details",
+    "prompt": "Macro photograph of a black cotton underwear waistband with a small tonal embroidered monogram-style mark and clean flatlock stitching, dramatic low side light, charcoal palette. No readable letters, no logo text, no watermark."
+  },
+  {
+    "target": "public/images/essential/hero-concrete.png",
+    "size": "16:9",
+    "use": "Essential Affair hero",
+    "prompt": "Original photorealistic quiet-luxury essentials campaign photograph, wide 16:9. Adult South Asian woman seated on the floor against a raw sunlit concrete wall, wearing an oversized off-white heavyweight cotton T-shirt and loose light-grey sweatpants, knees raised, gaze down and to the side, hard diagonal afternoon light. Subject on the right two-thirds, left third quieter dark concrete for white headline text. Muted ecru, grey and charcoal palette, fine grain. No text, logo, watermark, collage or border."
+  },
+  {
+    "target": "public/images/essential/oversized-tee.png",
+    "size": "4:5",
+    "use": "Oversized Tee",
+    "prompt": "Photorealistic premium ecommerce still life of one off-white heavyweight cotton oversized crew-neck T-shirt, front view as an invisible mannequin with no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin, crisp fabric texture. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/essential/washed-boxy-tee.png",
+    "size": "4:5",
+    "use": "Washed Boxy Tee",
+    "prompt": "Photorealistic premium ecommerce still life of one washed charcoal-grey boxy cotton T-shirt with a slightly cropped body, front view as an invisible mannequin with no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin, crisp fabric texture. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/essential/crop-top.png",
+    "size": "4:5",
+    "use": "Crop Top",
+    "prompt": "Photorealistic premium ecommerce still life of one black ribbed cotton women's sleeveless crop top with a high scoop neck, front view as an invisible mannequin with no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin, crisp fabric texture. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/essential/spaghetti-top.png",
+    "size": "4:5",
+    "use": "Spaghetti Top",
+    "prompt": "Photorealistic premium ecommerce still life of one white ribbed cotton women's spaghetti-strap top, front view as an invisible mannequin with no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin, crisp fabric texture. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/essential/camisole-top.png",
+    "size": "4:5",
+    "use": "Camisole Top",
+    "prompt": "Photorealistic premium ecommerce still life of one black cotton-modal women's camisole with thin straps, front view as an invisible mannequin with no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin, crisp fabric texture. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/essential/wide-leg-sweatpant.png",
+    "size": "4:5",
+    "use": "Wide-Leg Sweatpant",
+    "prompt": "Photorealistic premium ecommerce still life of one pair of heather-grey wide-leg cotton fleece sweatpants with a drawstring waist, laid flat, front view as an invisible mannequin with no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin, crisp fabric texture. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/essential/relaxed-short.png",
+    "size": "4:5",
+    "use": "Relaxed Short",
+    "prompt": "Photorealistic premium ecommerce still life of one pair of black relaxed cotton shorts with an elastic waistband, laid flat, front view as an invisible mannequin with no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin, crisp fabric texture. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/essential/casual-pant.png",
+    "size": "4:5",
+    "use": "Casual Pant",
+    "prompt": "Photorealistic premium ecommerce still life of one pair of stone-beige relaxed cotton casual trousers with a drawstring waist, laid flat, front view as an invisible mannequin with no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin, crisp fabric texture. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/essential/essential-hoodie.png",
+    "size": "4:5",
+    "use": "Essential Hoodie",
+    "prompt": "Photorealistic premium ecommerce still life of one heather-grey heavyweight cotton fleece hoodie with a kangaroo pocket, front view as an invisible mannequin with no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin, crisp fabric texture. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/essential/essential-crew.png",
+    "size": "4:5",
+    "use": "Essential Crew",
+    "prompt": "Photorealistic premium ecommerce still life of one black heavyweight cotton fleece crew-neck sweatshirt, front view as an invisible mannequin with no person, centred on a warm light-grey seamless studio backdrop, soft natural shadow, generous margin, crisp fabric texture. No text, logo, tag, watermark or collage."
+  },
+  {
+    "target": "public/images/essential/panel-move.png",
+    "size": "16:9",
+    "use": "Panel: Made to move with you",
+    "prompt": "Original photorealistic activewear editorial, wide 16:9. Adult South Asian woman in a black sports bra and black loose trousers reclining on a concrete floor in soft window light, one arm raised behind her head, relaxed and confident, muted charcoal and warm skin palette, generous dark negative space on the left for white text. Modest, no nudity. No text, logo, watermark or collage."
+  },
+  {
+    "target": "public/images/essential/panel-detail.png",
+    "size": "16:9",
+    "use": "Panel: Considered in every detail",
+    "prompt": "Macro photograph of a folded heather-grey cotton fleece sweatshirt showing the neat woven neck label and flatlock stitching, resting on a black fleece garment, dramatic low side light, charcoal and grey palette, space on the left for white text. Label must be blank with no readable letters. No logo text, no watermark."
+  }
+]

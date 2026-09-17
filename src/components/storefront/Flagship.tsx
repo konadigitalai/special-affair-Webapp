@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import WorldLanding, { worldLandings } from "./WorldLanding";
 
 export const worldPages = [
   { name: "Inner Affair", image: "/images/flagship/inner-affair-hd-v2.png", tagline: "Closest to you.", title: "The foundation of everything.", description: "Everyday essentials, reimagined. Thoughtfully designed inner layers for the first part of your day.", note: "Closer. Softer. Stronger. Yours." },
@@ -40,7 +41,7 @@ export function CampaignPhoto({ name, alt, priority = false, className = "" }: {
   return <div className={`campaign-photo ${className}`}><Image src={name.startsWith("/") || name.startsWith("http") ? name : campaignImage(name)} alt={alt} fill sizes={priority ? "100vw" : "(max-width: 700px) 100vw, 70vw"} priority={priority} unoptimized={priority} /></div>;
 }
 
-function CampaignVideo({ paused }: { paused: boolean }) {
+export function CampaignVideo({ paused, src = "/videos/first-affair-loop-v2.webm", poster = "/images/flagship/first-affair-hero-hd-v2.png", alt = "Athlete overlooking an Indian city at sunrise" }: { paused: boolean; src?: string; poster?: string; alt?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [ready, setReady] = useState(false);
 
@@ -58,9 +59,9 @@ function CampaignVideo({ paused }: { paused: boolean }) {
   }, [paused]);
 
   return <div className="campaign-photo campaign-video">
-    <Image className="campaign-video-poster" src="/images/flagship/first-affair-hero-hd-v2.png" alt="Athlete overlooking an Indian city at sunrise" fill sizes="100vw" priority unoptimized />
-    <video ref={videoRef} className={ready ? "is-ready" : ""} autoPlay loop muted playsInline preload="metadata" poster="/images/flagship/first-affair-hero-hd-v2.png" onCanPlay={() => setReady(true)} onError={() => setReady(false)} aria-hidden="true">
-      <source src="/videos/first-affair-loop-v2.webm" type="video/webm" />
+    <Image className="campaign-video-poster" src={poster} alt={alt} fill sizes="100vw" priority unoptimized />
+    <video ref={videoRef} className={ready ? "is-ready" : ""} autoPlay loop muted playsInline preload="metadata" poster={poster} onCanPlay={() => setReady(true)} onError={() => setReady(false)} aria-hidden="true">
+      <source src={src} type="video/webm" />
       Your browser does not support background video.
     </video>
   </div>;
@@ -106,7 +107,9 @@ export default function Flagship(props: Props) {
   const journal = view === "Journal";
   const about = view === "About";
   const shopListing = view === "Shop" || view === "New";
+  const productPage = view === "Product";
   const world = worldPages.find(w => w.name === view);
+  const landing = world ? worldLandings[world.name] : undefined;
   const go = (next: string) => { navigate(next); setMenu(false); setShopMenu(false); setFilters({}); setPriceCap(1500000); };
   const select = (key: string, value: string) => setFilters(current => {
     const selected = current[key] || [];
@@ -114,7 +117,7 @@ export default function Flagship(props: Props) {
   });
   const selected = (key: string, value: string) => (filters[key] || []).includes(value);
   const unique = (rows: StoreProduct[]) => rows.filter((p, i) => rows.findIndex(a => a.product_id === p.product_id) === i);
-  const catalogOrder = ["Core Bra", "Move Legging", "Essential Tee", "Active Short", "The Hoodie", "Relaxed Pant", "Balance Bra", "Move Jacket", "Lift Tank", "Everyday Sweat", "Core Cap", "Daily Socks (2 Pack)"];
+  const catalogOrder = ["Core Bra", "Move Legging", "Essential Tee", "Active Short", "The Hoodie", "Relaxed Pant", "Balance Bra", "Move Jacket", "Lift Tank", "Everyday Sweat", "Core Cap", "Daily Socks (2 Pack)", "Boxer Brief", "Boxer Short", "Slim Tank", "Second-Skin Tee", "Bralette", "Brief", "Boy Short", "Tank", "Cami Set", "Sleep Set", "Oversized Tee", "Washed Boxy Tee", "Crop Top", "Spaghetti Top", "Camisole Top", "Wide-Leg Sweatpant", "Relaxed Short", "Casual Pant", "Essential Hoodie", "Essential Crew"];
   const filtered = unique(products.filter(p =>
     (!world || p.category === world.name) &&
     (!(filters.World || []).length || filters.World.includes(p.category)) &&
@@ -139,7 +142,8 @@ export default function Flagship(props: Props) {
       {shopMenu && <div className="shop-menu"><button onClick={() => go("Shop")}>Shop all</button>{worldPages.map(w => <button key={w.name} onClick={() => go(w.name)}>{w.name}</button>)}<button onClick={() => onPanel("wishlist")}>Wishlist</button></div>}
       {menu && <div className="mobile-navigation"><button className="mobile-account" onClick={() => { onPanel("account"); setMenu(false); }}>Hello<br /><small>Sign in or create account →</small></button>{["Shop", "New", "Journal", "About"].map(n => <button key={n} onClick={() => go(n)}>{n}</button>)}<details><summary>The four worlds</summary>{worldPages.map(w => <button key={w.name} onClick={() => go(w.name)}>{w.name}</button>)}</details><button onClick={() => { onPanel("wishlist"); setMenu(false); }}>♡ Wishlist</button><button onClick={() => { onPanel("search"); setMenu(false); }}>⌕ Search</button><small>India (INR)</small></div>}
     </header>
-    <main id="main-content" className="flagship-main" key={view}>
+    <main id="main-content" className={`flagship-main ${productPage ? "product-main" : ""}`} key={view}>
+      {productPage ? props.children : landing && world ? <WorldLanding world={world} landing={landing} products={products} ready={ready} busy={busy} wishlist={wishlist} onProduct={onProduct} onSave={onSave} onQuickAdd={onQuickAdd} onStory={onStory} go={go} /> : <>
       <section className={`campaign-hero ${home ? "home-hero" : ""} ${shopListing ? "shop-listing-hero" : ""} ${paused ? "paused" : ""}`}>
         {home ? <CampaignVideo paused={paused} /> : <CampaignPhoto name={shopListing ? "/images/flagship/movement-film-hd-v2.png" : world?.image || "first-affair"} alt={shopListing ? "Athlete in a black racerback top after movement" : world ? `${world.name} editorial campaign` : "Special Affair editorial campaign"} priority />}
         <div className="campaign-shade" /><div className="campaign-copy"><span className="tiny-label">{home ? "A HIGHER STANDARD OF EVERYDAY" : journal ? "JOURNAL" : about ? "OUR WORLD" : world ? "COLLECTION" : "SHOP"}</span><h1>{home ? "FIRST AFFAIR" : journal ? <>Stories for<br />a more intentional life.</> : about ? <>From the first<br />layer outward.</> : world?.name || (view === "New" ? "New arrivals" : "Shop All")}</h1>
@@ -187,7 +191,8 @@ export default function Flagship(props: Props) {
           <div><div className={`flagship-product-grid ${catalogView === "list" ? "catalog-list-view" : ""}`}>{cards(filtered, false, true)}</div>{!filtered.length && <div className="empty-state"><p>{ready ? "No pieces match this selection." : "Loading the collection…"}</p><button className="underlined-link" onClick={() => { setFilters({}); setPriceCap(1500000); }}>Reset filters</button></div>}</div>
         </div></section>{world && <>{materialPanels()}<section className="layering-section"><div className="flagship-section-title"><h2>More to explore.</h2><button className="underlined-link" onClick={() => go("Shop")}>Explore all collections →</button></div>{worlds(true)}</section></>}
       </>}
+      </>}
     </main>
-    <footer className="flagship-footer"><div className="newsletter-bar"><div><h3>Join the affair.</h3><p>Be the first to know about new drops, stories and events.</p></div><form onSubmit={e => { e.preventDefault(); newsletter(String(new FormData(e.currentTarget).get("email"))); }}><label className="sr-only" htmlFor="flagship-email">Your email</label><input id="flagship-email" name="email" placeholder="Your email" type="email" required /><button aria-label="Subscribe to newsletter" disabled={!ready || busy}>→</button></form>{home ? <div className="newsletter-socials" aria-label="Social channels"><span title="Instagram">◎</span><span title="YouTube">▶</span><span title="Pinterest">p</span></div> : (shopListing || world) ? <div className="newsletter-links" aria-label="Social channels"><span>INSTAGRAM</span><span>YOUTUBE</span><span>PINTEREST</span></div> : <div className="newsletter-links"><button onClick={() => go("Journal")}>JOURNAL</button><button onClick={() => onPanel("support")}>CONTACT</button></div>}</div><div className="flagship-footer-bottom"><button className="brand" onClick={() => go("House")}>Special Affair</button><nav aria-label="Footer navigation">{["Shop", "Journal", "About"].map(n => <button key={n} onClick={() => go(n)}>{n}</button>)}<button onClick={() => onPanel("support")}>Help</button></nav><div><span>INDIA (INR)</span><button onClick={() => onStory("Privacy")}>Privacy</button><button onClick={() => onStory("Terms")}>Terms</button><span>© 2026 SPECIAL AFFAIR</span></div><span className="sa-seal" aria-label="SA monogram">Sa</span></div></footer>
+    <footer className="flagship-footer"><div className="newsletter-bar"><div><h3>{landing?.newsletter.title || "Join the affair."}</h3><p>{landing?.newsletter.body || "Be the first to know about new drops, stories and events."}</p></div><form onSubmit={e => { e.preventDefault(); newsletter(String(new FormData(e.currentTarget).get("email"))); }}><label className="sr-only" htmlFor="flagship-email">Your email</label><input id="flagship-email" name="email" placeholder="Your email" type="email" required /><button aria-label="Subscribe to newsletter" disabled={!ready || busy}>→</button></form>{home ? <div className="newsletter-socials" aria-label="Social channels"><span title="Instagram">◎</span><span title="YouTube">▶</span><span title="Pinterest">p</span></div> : (shopListing || world || productPage) ? <div className="newsletter-links" aria-label="Social channels"><span>INSTAGRAM</span><span>YOUTUBE</span><span>PINTEREST</span></div> : <div className="newsletter-links"><button onClick={() => go("Journal")}>JOURNAL</button><button onClick={() => onPanel("support")}>CONTACT</button></div>}</div><div className="flagship-footer-bottom"><button className="brand" onClick={() => go("House")}>Special Affair</button><nav aria-label="Footer navigation">{["Shop", "Journal", "About"].map(n => <button key={n} onClick={() => go(n)}>{n}</button>)}<button onClick={() => onPanel("support")}>Help</button></nav><div><span>INDIA (INR)</span><button onClick={() => onStory("Privacy")}>Privacy</button><button onClick={() => onStory("Terms")}>Terms</button><span>© 2026 SPECIAL AFFAIR</span></div><span className="sa-seal" aria-label="SA monogram">Sa</span></div></footer>
   </>;
 }

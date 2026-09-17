@@ -14,3 +14,5 @@ The remaining development apparel uses the individually generated catalogue phot
 The client-reference homepage uses eight additional original HD assets generated with the built-in image generation tool: `first-affair-hero-hd-v2.png`, `inner-affair-hd-v2.png`, `essential-affair-hd-v2.png`, `movement-film-hd-v2.png`, plus isolated product studies for the tee, shorts, hoodie, and relaxed pant. Their normalized production prompts and measured dimensions are recorded in `prompts.json`.
 
 The homepage uses the silent seamless 10-second `../../videos/first-affair-loop-v2.webm` motion study derived from `first-affair-hero-hd-v2.png`; that still remains its poster and reduced-motion fallback. The final approved campaign film can replace the WebM at the same path without changing the interface.
+
+The Inner Affair landing uses two further motion studies in `../../videos/`: `inner-affair-hero-loop.webm` (from `inner-affair.webp`) and `inner-affair-film-01.webm` (from `../catalog/world-inner-underwear.png`), each a ten-second seamless camera drift recorded from a canvas in headless Chrome. They are placeholders for the approved campaign films.
