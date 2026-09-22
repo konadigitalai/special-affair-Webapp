@@ -821,7 +821,7 @@ export default function Storefront({
               </form>
             </>
           )}
-          {panel === "help" && <ShoppingHelp request={request} perform={perform} busy={busy} onProduct={slug => { const item = products.find(p => p.slug === slug); if (item) showProduct(item); }} />}
+          {panel === "help" && <ShoppingHelp request={request} perform={perform} busy={busy} products={products} onProduct={showProduct} onPayment={paymentHandoff} refreshOrders={refreshOrders} />}
           {panel === "story" && (
             <>
               <span className="eyebrow">THE HOUSE OF SPECIAL AFFAIR</span>

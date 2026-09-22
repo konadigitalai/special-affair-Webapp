@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 
 type Request = <T>(path: string, method?: string, body?: unknown) => Promise<T>;
 type Perform = (action: () => Promise<void>) => Promise<void>;
@@ -81,14 +82,144 @@ export function SupportHistory({ request, perform, busy }: { request: Request; p
   </section>;
 }
 
-export function ShoppingHelp({ request, perform, busy, onProduct }: { request: Request; perform: Perform; busy: boolean; onProduct: (slug: string) => void }) {
+type ProposedAction = { command: string; payload: { path?: string; body?: Record<string, unknown> }; requires_confirmation: boolean };
+type PaymentResult = { order_id: string; payment: { payment_attempt_id: string; provider?: string; redirect_url?: string } };
+type Evidence = { slug: string; name: string; variant_id: string; colour: string | null; price_minor: number };
+type HelpMessage = {
+  question: string; status: "sending" | "failed" | "answered"; answer?: string;
+  products: Evidence[]; actions: ProposedAction[]; disclaimer?: string | null;
+};
+type ChatResponse = { session_id: string; session_token: string; answer: string; products: Evidence[]; proposed_actions?: ProposedAction[]; disclaimer?: string | null };
+const SUGGESTIONS = ["Black pieces under ₹5,000", "Help me find leggings", "Something in sage", "Where is my order?"];
+const money = (value: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value / 100);
+const ACTION_LABELS: Record<string, [string, string]> = {
+  cancel_order: ["Cancel this order", "Cancel this order? Items go back into stock and this cannot be undone."],
+  retry_payment: ["Retry payment", "Start a new payment attempt for this order?"],
+  request_return: ["Start a return", "Choose the items and reason for your return below."],
+  create_support_case: ["Contact support", "Open a support case with your message so our team can help?"],
+};
+const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+
+// The agent only proposes actions; the order ID is validated here and each action uses the normal, authorised endpoint.
+function actionOrderId(action: ProposedAction): string | null {
+  const fromPath = action.payload.path?.match(new RegExp(`^/api/v1/orders/(${UUID})/(cancel|retry-payment)$`, "i"))?.[1];
+  const fromBody = typeof action.payload.body?.order_id === "string" ? action.payload.body.order_id : undefined;
+  const id = fromPath || fromBody;
+  return id && new RegExp(`^${UUID}$`, "i").test(id) ? id : null;
+}
+
+function HelpProduct({ evidence, products, onProduct }: { evidence: Evidence; products: StoreProduct[]; onProduct: (item: StoreProduct) => void }) {
+  const item = products.find(p => p.id === evidence.variant_id) || products.find(p => p.slug === evidence.slug);
+  const image = item?.media[0]?.url;
+  const colour = item?.colour || evidence.colour;
+  return <button className="help-product" disabled={!item} onClick={() => item && onProduct(item)} aria-label={`View ${evidence.name}${colour ? ` in ${colour}` : ""}`}>
+    <span className="help-product-image">{image ? <Image src={image} alt="" fill unoptimized sizes="140px" /> : <span aria-hidden="true">{evidence.name.slice(0, 1)}</span>}</span>
+    <span className="help-product-name">{evidence.name}</span>
+    <span className="help-product-meta">{colour ? `${colour} · ` : ""}{money(item?.price_minor ?? evidence.price_minor)}</span>
+  </button>;
+}
+
+export function ShoppingHelp({ request, perform, busy, products, onProduct, onPayment, refreshOrders }: {
+  request: Request; perform: Perform; busy: boolean; products: StoreProduct[]; onProduct: (item: StoreProduct) => void;
+  onPayment: (result: PaymentResult) => Promise<void>; refreshOrders: () => Promise<void>;
+}) {
   const [session, setSession] = useState<{ session_id: string; session_token: string } | null>(null);
-  const [messages, setMessages] = useState<{ question: string; answer: string; products: { slug: string; name: string }[] }[]>([]);
-  return <section><h2>Shopping help</h2><p>Ask about products, materials or finding a piece.</p>
-    <div aria-live="polite">{messages.map((m, i) => <article key={i}><p><strong>{m.question}</strong></p><p>{m.answer}</p>{m.products.map(p => <button className="account-link" key={p.slug} onClick={() => onProduct(p.slug)}>{p.name}</button>)}</article>)}</div>
-    <form className="checkout-form" onSubmit={e => { e.preventDefault(); const form = e.currentTarget; const message = String(new FormData(form).get("message")); void perform(async () => {
-      const result = await request<{ session_id: string; session_token: string; answer: string; products: { slug: string; name: string }[] }>("/copilot/chat", "POST", { message, ...session });
-      setSession({ session_id: result.session_id, session_token: result.session_token }); setMessages(current => [...current, { question: message, answer: result.answer, products: result.products }]); form.reset();
-    }); }}><label>Your question<input name="message" required maxLength={2000} /></label><button className="solid-button" disabled={busy}>Ask</button></form>
+  const [messages, setMessages] = useState<HelpMessage[]>([]);
+  const [draft, setDraft] = useState("");
+  const [pending, setPending] = useState<string | null>(null);
+  const [done, setDone] = useState<Record<string, string>>({});
+  const [returnOrder, setReturnOrder] = useState<{ key: string; order: StoreOrder } | null>(null);
+  const end = useRef<HTMLDivElement>(null);
+  const sending = messages.some(m => m.status === "sending");
+  useEffect(() => { end.current?.scrollIntoView({ block: "end", behavior: "smooth" }); }, [messages, pending, returnOrder]);
+
+  const update = (index: number, patch: Partial<HelpMessage>) => setMessages(current => current.map((m, i) => i === index ? { ...m, ...patch } : m));
+  const send = (text: string, retryIndex?: number) => {
+    const question = text.trim();
+    if (!question || busy) return;
+    const index = retryIndex ?? messages.length;
+    if (retryIndex === undefined) setMessages(current => [...current, { question, status: "sending", products: [], actions: [] }]);
+    else update(index, { status: "sending" });
+    setDraft("");
+    void perform(async () => {
+      try {
+        const result = await request<ChatResponse>("/copilot/chat", "POST", { message: question, ...session });
+        setSession({ session_id: result.session_id, session_token: result.session_token });
+        update(index, { status: "answered", answer: result.answer, products: result.products, actions: result.proposed_actions || [], disclaimer: result.disclaimer });
+      } catch (error) { update(index, { status: "failed" }); throw error; }
+    });
+  };
+  const run = (key: string, action: ProposedAction) => void perform(async () => {
+    const orderId = actionOrderId(action);
+    if (!orderId) throw new Error("This action is no longer available.");
+    setPending(null);
+    if (action.command === "cancel_order") {
+      await request(`/orders/${orderId}/cancel`, "POST"); await refreshOrders();
+      setDone(current => ({ ...current, [key]: "Your order is cancelled." }));
+    } else if (action.command === "retry_payment") {
+      const result = await request<Omit<PaymentResult, "order_id">>(`/orders/${orderId}/retry-payment`, "POST");
+      await onPayment({ order_id: orderId, payment: result.payment });
+    } else if (action.command === "request_return") {
+      setReturnOrder({ key, order: await request<StoreOrder>(`/orders/${orderId}`) });
+    } else if (action.command === "create_support_case") {
+      const body = action.payload.body || {};
+      await request("/support/cases", "POST", { order_id: orderId, subject: String(body.subject || "Order help"), body: String(body.body || "") });
+      setDone(current => ({ ...current, [key]: "Support case opened. You can follow it under Support conversations." }));
+    }
+  });
+
+  function actionsFor(m: HelpMessage, i: number) {
+    const actions = m.actions.filter(a => ACTION_LABELS[a.command]);
+    if (!actions.length) return null;
+    return <div className="help-actions">
+      {actions.map((action, j) => {
+        const key = `${i}:${j}`; const [label, question] = ACTION_LABELS[action.command];
+        if (done[key]) return <p key={key} className="help-status" role="status"><span aria-hidden="true">✓</span> {done[key]}</p>;
+        if (returnOrder?.key === key) return <div key={key} className="help-return"><ReturnForm order={returnOrder.order} request={request} perform={perform} busy={busy}
+          refresh={async () => { await refreshOrders(); setReturnOrder(null); setDone(current => ({ ...current, [key]: "Your return request is submitted." })); }} /></div>;
+        if (pending === key) return <div key={key} className="help-confirm" role="group" aria-label={label}>
+          <p>{question}</p>
+          <div className="help-confirm-buttons">
+            <button className="help-button primary" disabled={busy} onClick={() => run(key, action)}>Confirm</button>
+            <button className="help-button" disabled={busy} onClick={() => setPending(null)}>Not now</button>
+          </div>
+        </div>;
+        return <button key={key} className="help-button" disabled={busy}
+          onClick={() => action.command === "request_return" ? run(key, action) : setPending(key)}>{label}</button>;
+      })}
+      {m.disclaimer && <small className="help-note">{m.disclaimer}</small>}
+    </div>;
+  }
+
+  return <section className="help-chat">
+    <header className="help-intro">
+      <h2>Shopping help</h2>
+      <p>Ask about pieces, colours and budgets, or about your orders: tracking, cancellations, payments and returns.</p>
+    </header>
+    <div className="help-thread" aria-live="polite">
+      {!messages.length && <div className="help-empty">
+        <span className="help-sender">Try asking</span>
+        <div className="help-chips">{SUGGESTIONS.map(s => <button key={s} className="help-chip" disabled={busy} onClick={() => send(s)}>{s}</button>)}</div>
+      </div>}
+      {messages.map((m, i) => <div className="help-turn" key={i}>
+        <p className="help-bubble user">{m.question}</p>
+        {m.status === "failed" && <p className="help-failed">Not sent. <button className="help-link" disabled={busy} onClick={() => send(m.question, i)}>Try again</button></p>}
+        {m.status === "sending" && <div className="help-bubble bot help-typing" role="status" aria-label="Special Affair is typing"><span /><span /><span /></div>}
+        {m.status === "answered" && <div className="help-bubble bot">
+          <span className="help-sender">Special Affair</span>
+          <p>{m.answer}</p>
+          {m.products.length > 0 && <div className="help-products">{m.products.map(p => <HelpProduct key={p.variant_id} evidence={p} products={products} onProduct={onProduct} />)}</div>}
+          {actionsFor(m, i)}
+        </div>}
+      </div>)}
+      <div ref={end} className="help-end" />
+    </div>
+    <form className="help-composer" onSubmit={e => { e.preventDefault(); send(draft); }}>
+      <label className="help-label" htmlFor="help-message">Your question</label>
+      <input id="help-message" name="message" value={draft} onChange={e => setDraft(e.target.value)} maxLength={2000} autoComplete="off"
+        placeholder={sending ? "Waiting for a reply…" : "Ask about a piece or your order"} />
+      <button className="help-send" disabled={busy || !draft.trim()}>Ask</button>
+    </form>
   </section>;
 }
+
