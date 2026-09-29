@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import Flagship, { CampaignPhoto, ProductCard, worldPages, type JournalStory } from "./Flagship";
+import Flagship, { BrandWordmark, CampaignPhoto, ProductCard, worldPages, type JournalStory } from "./Flagship";
 import ProductDetail from "./ProductDetail";
 import { AccountDetails, ReturnForm, SupportHistory, ShoppingHelp } from "./CustomerFlows";
 import { productImages } from "./catalog-imagery";
@@ -49,6 +49,7 @@ const money = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value / 100);
 let scriptPromise: Promise<void> | undefined;
+let razorpayScriptPromise: Promise<void> | undefined;
 function loadCommerce(config: Record<string, string>) {
   window.CommerceConfig = config;
   if (!scriptPromise)
@@ -64,6 +65,19 @@ function loadCommerce(config: Record<string, string>) {
         });
     })();
   return scriptPromise;
+}
+function loadRazorpay() {
+  if (!razorpayScriptPromise)
+    razorpayScriptPromise = new Promise<void>((resolve, reject) => {
+      if (window.Razorpay) { resolve(); return; }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("Razorpay checkout could not load."));
+      document.head.append(script);
+    });
+  return razorpayScriptPromise;
 }
 function Photo({
   index,
@@ -129,7 +143,7 @@ export default function Storefront({
   } | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
   const [authConfigured, setAuthConfigured] = useState(false);
-  const [commerce, setCommerce] = useState<{ sandbox_payments: boolean; payment_methods: string[]; return_window_days?: number }>({ sandbox_payments: false, payment_methods: ["cod"] });
+  const [commerce, setCommerce] = useState<{ payment_provider?: string; payment_client_key?: string; sandbox_payments: boolean; payment_methods: string[]; return_window_days?: number }>({ sandbox_payments: false, payment_methods: ["cod"] });
   const [savedAddresses, setSavedAddresses] = useState<{ id: string; full_name: string; street: string; city: string; state: string; pin_code: string }[]>([]);
   const [storyContent, setStoryContent] = useState("");
   const [story, setStory] = useState("Our philosophy");
@@ -311,10 +325,36 @@ export default function Storefront({
     );
   }
   async function refreshOrders() { setOrders((await request<{ items: StoreOrder[] }>("/orders")).items); }
-  async function paymentHandoff(result: { order_id: string; payment_attempt_id?: string; status?: string; payment?: { provider?: string; payment_attempt_id?: string; redirect_url?: string } }) {
+  async function paymentHandoff(result: { order_id: string; payment_attempt_id?: string; status?: string; payment?: { provider?: string; provider_reference?: string; client_secret?: string; payment_attempt_id?: string; redirect_url?: string } }) {
     if (preview || result.payment?.provider === "sandbox") {
       setPayment({ order_id: result.order_id, payment_attempt_id: result.payment_attempt_id || result.payment?.payment_attempt_id || "" });
       setPanel("payment");
+    } else if (result.payment?.provider === "razorpay") {
+      const providerOrder = result.payment.provider_reference;
+      const key = result.payment.client_secret || commerce.payment_client_key;
+      if (!providerOrder || !key || !cart?.total_minor) throw new Error("Razorpay checkout is missing required order details.");
+      await loadRazorpay();
+      if (!window.Razorpay) throw new Error("Razorpay checkout is unavailable.");
+      setPayment({ order_id: result.order_id, payment_attempt_id: result.payment_attempt_id || result.payment.payment_attempt_id || "" });
+      setPanel("payment");
+      const checkout = new window.Razorpay({
+        key,
+        amount: cart.total_minor,
+        currency: cart.items[0]?.currency || "INR",
+        name: "Special Affair",
+        description: "Order payment",
+        order_id: providerOrder,
+        handler: response => void perform(async () => {
+          await request(`/orders/${result.order_id}/razorpay/confirm`, "POST", response);
+          await refreshOrders();
+          setCart(await request<StoreCart>("/carts", "POST"));
+          setPanel("orders");
+        }),
+        modal: { ondismiss: () => setNotice("Payment was not completed. Your reserved bag is still available for retry.") },
+        theme: { color: "#161616" },
+      });
+      checkout.on("payment.failed", () => setError("Payment was declined. Please retry or choose another method."));
+      checkout.open();
     } else if (result.payment?.redirect_url) {
       const url = new URL(result.payment.redirect_url);
       if (url.protocol !== "https:") throw new Error("The payment provider returned an invalid link.");
@@ -373,7 +413,7 @@ export default function Storefront({
       >
         <div className="dialog-body">
           <div className="dialog-heading">
-            <button className="brand" onClick={() => navigate("House")}>Special Affair</button>
+            <button className="brand" aria-label="Special Affair home" onClick={() => navigate("House")}><BrandWordmark /></button>
             <button
               className="close-button"
               aria-label="Close panel"
@@ -385,14 +425,16 @@ export default function Storefront({
           {panel && ["bag", "checkout", "account", "wishlist", "orders"].includes(panel) && <div className="utility-campaign"><CampaignPhoto name={panel === "checkout" ? "form" : panel === "account" ? "shell" : "first-affair"} alt="Special Affair campaign" /><h2>{({ bag: "Your cart", checkout: "Checkout", account: "My account", wishlist: "My wishlist", orders: "Your orders" } as Record<string, string>)[panel]}</h2></div>}
           {panel === "wishlist" && <><h2>My wishlist.</h2><p>For what comes next.</p><div className="wishlist-grid">{products.filter(p => wishlist.includes(p.id)).map(card)}</div>{!wishlist.length && <p className="empty-state">Save the pieces you love with the heart on any product.</p>}</>}
           {panel === "bag" && (
-            <>
-              <h2>
-                Your bag <sup>({count})</sup>
-              </h2>
-              <button className="account-link" disabled={!ready || busy} onClick={() => void perform(async () => setCart(await request<StoreCart>("/carts", "POST")))}>Refresh bag</button>
+            <section className="cart-interface">
+              <div className="cart-heading">
+                <div><span className="cart-kicker">YOUR SELECTION</span><h2>Your bag <sup>({count})</sup></h2></div>
+                <button className="cart-refresh" disabled={!ready || busy} onClick={() => void perform(async () => setCart(await request<StoreCart>("/carts", "POST")))}>Refresh</button>
+              </div>
               {!count ? (
-                <div className="empty-state">
-                  <p>Your next affair starts here.</p>
+                <div className="empty-state cart-empty">
+                  <span className="cart-empty-index">00</span>
+                  <h3>Your bag is ready for its first affair.</h3>
+                  <p>Explore considered layers for movement, everyday life and what comes next.</p>
                   <button
                     className="solid-button"
                     onClick={() => {
@@ -403,8 +445,8 @@ export default function Storefront({
                   </button>
                 </div>
               ) : (
-                <>
-                  <div className="bag-items">
+                <div className="cart-layout">
+                  <section className="cart-products" aria-label="Items in your bag">
                     {cart?.items.map((item) => (
                       <div className="bag-item" key={item.id}>
                         <Photo index={indexOf(item)} name={item.name} url={item.media[0]?.url} />
@@ -451,7 +493,9 @@ export default function Storefront({
                         </button>
                       </div>
                     ))}
-                  </div>
+                  </section>
+                  <aside className="cart-summary" aria-label="Order summary">
+                  <span className="cart-kicker">ORDER SUMMARY</span>
                   <form
                     className="coupon"
                     onSubmit={(e) => {
@@ -471,7 +515,7 @@ export default function Storefront({
                     <input
                       name="coupon"
                       aria-label="Promo code"
-                      placeholder="Promo code"
+                      placeholder="Promo or gift code"
                     />
                     <button disabled={busy}>Apply</button>
                   </form>
@@ -503,12 +547,14 @@ export default function Storefront({
                   >
                     Checkout ⟶
                   </button>
+                  <p className="cart-assurance">Taxes included. Secure checkout. Delivery details are confirmed before payment.</p>
                   <button className="continue" onClick={closePanel}>
                     Continue exploring
                   </button>
-                </>
+                  </aside>
+                </div>
               )}
-            </>
+            </section>
           )}
           {panel === "search" && (
             <>
@@ -584,7 +630,7 @@ export default function Storefront({
                     const input = form.elements.namedItem(name); if (input instanceof HTMLInputElement) input.value = value;
                   }
                 }}><option value="">Enter a new address</option>{savedAddresses.map(a => <option key={a.id} value={a.id}>{a.street}, {a.city}</option>)}</select></label>}
-                {!preview && <label>Payment method<select name="payment_method" defaultValue="cod">{commerce.payment_methods.map(method => <option key={method} value={method}>{method === "cod" ? "Cash on delivery" : method.toUpperCase() + " (sandbox)"}</option>)}</select></label>}
+                {!preview && <label>Payment method<select name="payment_method" defaultValue="cod">{commerce.payment_methods.map(method => <option key={method} value={method}>{method === "cod" ? "Cash on delivery" : commerce.payment_provider === "razorpay" ? method === "upi" ? "UPI via Razorpay" : "Card / wallet via Razorpay" : commerce.payment_provider === "stripe" ? "International card via Stripe" : method.toUpperCase() + " (sandbox)"}</option>)}</select></label>}
                 {[
                   { name: "email", label: "Email", type: "email" },
                   { name: "name", label: "Full name", type: "text" },
@@ -634,7 +680,7 @@ export default function Storefront({
           {panel === "payment" && (
             <>
               <h2>Payment status</h2>
-              <p>{preview ? "Preview payment. No money is charged." : "Sandbox payment. No money is charged. Confirmation is recorded by the backend."}</p>
+              <p>{preview ? "Preview payment. No money is charged." : commerce.payment_provider === "razorpay" ? "Complete payment in the secure Razorpay window. This order is confirmed only after server-side signature verification." : "Sandbox payment. No money is charged. Confirmation is recorded by the backend."}</p>
               {(preview || commerce.sandbox_payments) && ["captured", "failed"].map(status => <button key={status} className="outline-button" disabled={busy || !payment?.payment_attempt_id} onClick={() => void perform(async () => {
                 if (!payment) return;
                 await request(preview ? `/preview/payments/${payment.payment_attempt_id}` : `/orders/${payment.order_id}/sandbox-payment/${payment.payment_attempt_id}`, "POST", preview ? { action: status === "captured" ? "authorized" : "failed" } : { status });

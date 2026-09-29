@@ -27,6 +27,27 @@ const featuredPackshots: Record<string, string> = {
   "Everyday Sweat": "/images/flagship/everyday-sweat-packshot-hd-v2.png",
   "Core Cap": "/images/flagship/core-cap-packshot-hd-v2.png",
   "Daily Socks (2 Pack)": "/images/flagship/daily-socks-packshot-hd-v2.png",
+  "Boxer Brief": "/images/flagship/active-short-packshot-hd-v2.png",
+  "Boxer Short": "/images/flagship/active-short-packshot-hd-v2.png",
+  "Boy Short": "/images/flagship/balance-bra-packshot-hd-v2.png",
+  "Bralette": "/images/flagship/core-bra-ivory.webp",
+  "Brief": "/images/flagship/balance-bra-packshot-hd-v2.png",
+  "Cami Set": "/images/flagship/lift-tank-packshot-hd-v2.png",
+  "Camisole Top": "/images/flagship/lift-tank-packshot-hd-v2.png",
+  "Casual Pant": "/images/flagship/relaxed-pant-packshot-hd-v2.png",
+  "Crop Top": "/images/flagship/core-bra-ivory.webp",
+  "Essential Crew": "/images/flagship/everyday-sweat-packshot-hd-v2.png",
+  "Essential Hoodie": "/images/flagship/hoodie-packshot-hd-v2.png",
+  "Oversized Tee": "/images/flagship/essential-tee-packshot-hd-v2.png",
+  "Petal Tote": "/images/catalog/product-shell.png",
+  "Relaxed Short": "/images/flagship/active-short-packshot-hd-v2.png",
+  "Second-Skin Tee": "/images/flagship/essential-tee-packshot-hd-v2.png",
+  "Sleep Set": "/images/flagship/everyday-sweat-packshot-hd-v2.png",
+  "Slim Tank": "/images/flagship/lift-tank-packshot-hd-v2.png",
+  "Spaghetti Top": "/images/flagship/lift-tank-packshot-hd-v2.png",
+  "Tank": "/images/flagship/lift-tank-packshot-hd-v2.png",
+  "Washed Boxy Tee": "/images/flagship/essential-tee-packshot-hd-v2.png",
+  "Wide-Leg Sweatpant": "/images/flagship/relaxed-pant-packshot-hd-v2.png",
 };
 const listingBadges: Record<string, string> = {
   "Core Bra": "NEW",
@@ -39,6 +60,14 @@ const listingBadges: Record<string, string> = {
 
 export function CampaignPhoto({ name, alt, priority = false, className = "" }: { name: string; alt: string; priority?: boolean; className?: string }) {
   return <div className={`campaign-photo ${className}`}><Image src={name.startsWith("/") || name.startsWith("http") ? name : campaignImage(name)} alt={alt} fill sizes={priority ? "100vw" : "(max-width: 700px) 100vw, 70vw"} priority={priority} unoptimized={priority} /></div>;
+}
+
+export function BrandWordmark({ inverse = false, priority = false }: { inverse?: boolean; priority?: boolean }) {
+  return <Image className={`brand-wordmark${inverse ? " brand-wordmark-inverse" : ""}`} src="/brand/sa-monogram-hd.png" alt="Special Affair" width={1541} height={1020} priority={priority} />;
+}
+
+function FooterBrandLockup() {
+  return <Image className="footer-brand-lockup" src="/brand/footer-lockup-hd.png" alt="Special Affair" width={1520} height={1034} />;
 }
 
 export function CampaignVideo({ paused, src = "/videos/first-affair-loop-v2.webm", poster = "/images/flagship/first-affair-hero-hd-v2.png", alt = "Athlete overlooking an Indian city at sunrise" }: { paused: boolean; src?: string; poster?: string; alt?: string }) {
@@ -69,14 +98,14 @@ export function CampaignVideo({ paused, src = "/videos/first-affair-loop-v2.webm
 
 export function ProductCard({ item, products, onProduct, saved, onSave, compact = false, listing = false, imageOverride, onQuickAdd, quickAddDisabled = false }: { item: StoreProduct; products: StoreProduct[]; onProduct: (item: StoreProduct) => void; saved: boolean; onSave: (item: StoreProduct) => void; compact?: boolean; listing?: boolean; imageOverride?: string; onQuickAdd?: (item: StoreProduct) => void; quickAddDisabled?: boolean }) {
   const colours = products.filter((p, i, all) => p.product_id === item.product_id && all.findIndex(a => a.product_id === p.product_id && a.colour === p.colour) === i);
-  const primaryImage = imageOverride || (listing ? featuredPackshots[item.name] : undefined) || item.media[0]?.url;
+  const packshot = featuredPackshots[item.name];
+  const primaryImage = imageOverride || (listing ? packshot : undefined) || item.media[0]?.url;
   return <article className={`flagship-product ${compact ? "compact" : ""} ${listing ? "listing-card" : ""}`}>
-    <button className={`product-image-link ${imageOverride ? "has-packshot" : ""}`} onClick={() => onProduct(item)} aria-label={`View ${item.name} in ${item.colour}`}>
-      {primaryImage ? <Image src={primaryImage} alt={`${item.name}, ${item.colour}`} fill unoptimized={!imageOverride} sizes="(max-width: 700px) 50vw, 25vw" /> : <span>Image coming soon</span>}
-      {!imageOverride && item.media[1]?.url && <Image className="alternate-product-image" src={item.media[1].url} alt="" fill unoptimized sizes="(max-width: 700px) 50vw, 25vw" />}
+    <button className={`product-image-link ${imageOverride || packshot ? "has-packshot" : ""}`} onClick={() => onProduct(item)} aria-label={`View ${item.name} in ${item.colour}`}>
+      {primaryImage ? <Image src={primaryImage} alt={`${item.name}, ${item.colour}`} fill unoptimized={!imageOverride && !packshot} sizes="(max-width: 700px) 50vw, 25vw" /> : <span>Image coming soon</span>}
+      {!listing && !imageOverride && item.media[1]?.url && <Image className="alternate-product-image" src={item.media[1].url} alt="" fill unoptimized sizes="(max-width: 700px) 50vw, 25vw" />}
       {!compact && !listing && <span className="card-world">{item.category}</span>}
       {listing && listingBadges[item.name] && <span className="product-badge">{listingBadges[item.name]}</span>}
-      {listing && <span className="product-monogram" aria-hidden="true">Sa</span>}
     </button>
     {!listing && <button className="save-piece" onClick={() => onSave(item)} aria-label={`${saved ? "Remove" : "Save"} ${item.name} ${saved ? "from" : "to"} wishlist`} aria-pressed={saved}>{saved ? "♥" : "♡"}</button>}
     <div className="flagship-product-copy">{listing && <span className="card-world">{item.category}</span>}<button onClick={() => onProduct(item)}>{item.name}</button><span>{money(item.price_minor)}</span></div>
@@ -136,7 +165,7 @@ export default function Flagship(props: Props) {
   const materialPanels = (homepage = false) => <div className={`material-panels ${homepage ? "home-material-panels" : ""}`}><button className="image-story" onClick={() => onStory("Material Matters", "material-matters")}><CampaignPhoto name="material" alt="Close-up of black ribbed fabric" /><div><h2>In the details,<br />a difference.</h2><p>Considered fabrics. Thoughtful construction.<br />Made to be a part of your life.</p><span className="underlined-link">Our materials →</span></div></button><button className="image-story centered-story" onClick={() => onStory("A Closer Look", "a-closer-look")}><CampaignPhoto name={homepage ? "/images/flagship/movement-film-hd-v2.png" : world?.image || "form"} alt="A study in movement" /><div><span className="circle-arrow">▶</span><h3>A CLOSER LOOK</h3><span className="tiny-label">{homepage ? "FILM 01: MOVEMENT" : "A STUDY IN MOVEMENT"}</span></div></button></div>;
   return <>
     <div className="announcement"><span aria-hidden="true">‹</span><span>{props.announcement || "CRAFTED FOR EVERY AFFAIR"}</span><span aria-hidden="true">›</span><small>INDIA (INR)</small></div>
-    <header className="flagship-header"><button className="brand" aria-label="Special Affair home" onClick={() => go("House")}>Special Affair</button>
+    <header className="flagship-header"><button className="brand" aria-label="Special Affair home" onClick={() => go("House")}><BrandWordmark priority /></button>
       <nav className="flagship-nav" aria-label="Main navigation"><button aria-expanded={shopMenu} onClick={() => setShopMenu(!shopMenu)}>Shop</button>{["New", "Journal", "About"].map(n => <button className={view === n ? "active" : ""} key={n} onClick={() => go(n)}>{n}</button>)}</nav>
       <nav className="flagship-utilities" aria-label="Your account and bag"><button aria-label="Search" onClick={() => onPanel("search")}><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg><span className="utility-label">Search</span></button><button className="desktop-account" onClick={() => onPanel("help")}>AI Help</button><button className="desktop-account" onClick={() => onPanel("account")}>Account</button><button onClick={() => onPanel("bag")}><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 8h14l1 13H4L5 8Z" /><path d="M8 8V6a4 4 0 0 1 8 0v2" /></svg> Bag ({count})</button><button className="menu-trigger" aria-label={menu ? "Close navigation" : "Open navigation"} aria-expanded={menu} onClick={() => setMenu(!menu)}>{menu ? "×" : "☰"}</button></nav>
       {shopMenu && <div className="shop-menu"><button onClick={() => go("Shop")}>Shop all</button>{worldPages.map(w => <button key={w.name} onClick={() => go(w.name)}>{w.name}</button>)}<button onClick={() => onPanel("wishlist")}>Wishlist</button></div>}
@@ -151,8 +180,7 @@ export default function Flagship(props: Props) {
           {!home && <p className="campaign-description">{journal ? "Movement. Material. People. Places." : about ? "A contemporary lifestyle house for movement, intimacy and everyday life." : world?.description || "Apparel for every affair. Thoughtfully designed for your everyday and what’s next."}</p>}
           {!journal && !shopListing && <button className="underlined-link" onClick={() => home ? go("New") : document.getElementById(about ? "philosophy" : "collection")?.scrollIntoView({ behavior: "smooth" })}>{home ? "Discover the drop" : about ? "Our philosophy" : "Explore the collection"} <span>→</span></button>}
         </div><p className="campaign-note">{shopListing ? "A more\nconscious\ntomorrow." : world?.note || "Movement\nPeople\nA brighter you"}</p>
-        {shopListing && <><div className="shop-hero-pager" aria-label="Campaign frame 1 of 3"><strong>01</strong><span>02</span><span>03</span></div><span className="shop-garment-mark" aria-hidden="true">Sa</span></>}
-        {home && <span className="hero-garment-mark" aria-hidden="true">Sa</span>}
+        {shopListing && <div className="shop-hero-pager" aria-label="Campaign frame 1 of 3"><strong>01</strong><span>02</span><span>03</span></div>}
         {home && <div className="campaign-film-control"><button className="campaign-play" aria-pressed={filmEngaged && !paused} onClick={() => { if (!filmEngaged) { setFilmEngaged(true); setPaused(false); } else setPaused(!paused); }} aria-label={!filmEngaged || paused ? "Play campaign film" : "Pause campaign film"}><span aria-hidden="true">{!filmEngaged || paused ? "▶" : "Ⅱ"}</span></button><span>{!filmEngaged || paused ? "PLAY FILM" : "PAUSE FILM"}</span></div>}
       </section>
       {(home || about || world) && <section className="house-statement" id="philosophy"><div><span className="tiny-label">{world ? `THE ${world.name.toUpperCase()} COLLECTION` : "THE HOUSE"}</span><h2>{world?.title || "From the first layer outward."}</h2></div><div><p>{world?.description || "Special Affair is a contemporary lifestyle house for movement, intimacy and everyday life. Thoughtfully designed pieces that feel effortless, refined and real."}</p><button className="underlined-link" onClick={() => onStory("Our Philosophy", "our-philosophy")}>Our philosophy →</button></div>{home && <span className="statement-motto">LAYER.<br />MOVE.<br />LIVE.<br />BELONG.</span>}</section>}
@@ -193,6 +221,6 @@ export default function Flagship(props: Props) {
       </>}
       </>}
     </main>
-    <footer className="flagship-footer"><div className="newsletter-bar"><div><h3>{landing?.newsletter.title || "Join the affair."}</h3><p>{landing?.newsletter.body || "Be the first to know about new drops, stories and events."}</p></div><form onSubmit={e => { e.preventDefault(); newsletter(String(new FormData(e.currentTarget).get("email"))); }}><label className="sr-only" htmlFor="flagship-email">Your email</label><input id="flagship-email" name="email" placeholder="Your email" type="email" required /><button aria-label="Subscribe to newsletter" disabled={!ready || busy}>→</button></form>{home ? <div className="newsletter-socials" aria-label="Social channels"><span title="Instagram">◎</span><span title="YouTube">▶</span><span title="Pinterest">p</span></div> : (shopListing || world || productPage) ? <div className="newsletter-links" aria-label="Social channels"><span>INSTAGRAM</span><span>YOUTUBE</span><span>PINTEREST</span></div> : <div className="newsletter-links"><button onClick={() => go("Journal")}>JOURNAL</button><button onClick={() => onPanel("support")}>CONTACT</button></div>}</div><div className="flagship-footer-bottom"><button className="brand" onClick={() => go("House")}>Special Affair</button><nav aria-label="Footer navigation">{["Shop", "Journal", "About"].map(n => <button key={n} onClick={() => go(n)}>{n}</button>)}<button onClick={() => onPanel("support")}>Help</button></nav><div><span>INDIA (INR)</span><button onClick={() => onStory("Privacy")}>Privacy</button><button onClick={() => onStory("Terms")}>Terms</button><span>© 2026 SPECIAL AFFAIR</span></div><span className="sa-seal" aria-label="SA monogram">Sa</span></div></footer>
+    <footer className="flagship-footer"><div className="newsletter-bar"><div><span className="tiny-label">THE SPECIAL AFFAIR LIST</span><h3>{landing?.newsletter.title || "Join the affair."}</h3><p>{landing?.newsletter.body || "Be the first to know about new drops, stories and events."}</p></div><form onSubmit={e => { e.preventDefault(); newsletter(String(new FormData(e.currentTarget).get("email"))); }}><label className="sr-only" htmlFor="flagship-email">Your email</label><input id="flagship-email" name="email" placeholder="Enter your email address" type="email" required /><button aria-label="Subscribe to newsletter" disabled={!ready || busy}>Join →</button></form>{home ? <div className="newsletter-socials" aria-label="Social channels"><span title="Instagram">◎</span><span title="YouTube">▶</span><span title="Pinterest">p</span></div> : (shopListing || world || productPage) ? <div className="newsletter-links" aria-label="Social channels"><span>INSTAGRAM</span><span>YOUTUBE</span><span>PINTEREST</span></div> : <div className="newsletter-links"><button onClick={() => go("Journal")}>JOURNAL</button><button onClick={() => onPanel("support")}>CONTACT</button></div>}</div><div className="flagship-footer-bottom"><div className="footer-identity"><button className="footer-brand" aria-label="Special Affair home" onClick={() => go("House")}><FooterBrandLockup /></button></div><nav aria-label="Footer navigation">{["Shop", "Journal", "About"].map(n => <button key={n} onClick={() => go(n)}>{n}</button>)}<button onClick={() => onPanel("support")}>Help</button></nav><div className="footer-legal"><span>INDIA (INR)</span><button onClick={() => onStory("Privacy")}>Privacy</button><button onClick={() => onStory("Terms")}>Terms</button><span>© 2026 SPECIAL AFFAIR</span></div></div></footer>
   </>;
 }

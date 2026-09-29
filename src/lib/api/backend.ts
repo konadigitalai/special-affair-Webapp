@@ -8,7 +8,7 @@ interface WireCart {
     size?: string; quantity: number; unit_price_minor: number; currency: string; line_total_minor: number;
     line_discount_minor?: number; line_tax_minor?: number }[];
 }
-interface WirePayment { attempt_id: string; provider: string; redirect_url?: string }
+interface WirePayment { attempt_id: string; provider: string; provider_reference: string; client_secret?: string; redirect_url?: string }
 interface WireWishlist { id: string; variant_ids: string[]; wishlist_token?: string }
 interface WireOrder {
   id: string; order_number: string; status: string; email: string; total_minor: number; checkout_id: string;
